@@ -3,6 +3,8 @@ import { HashRouter as Router, Routes, Route, NavLink, useLocation } from 'react
 import combinedLogo from './assets/combined_logo.png';
 import imd150tLogo from './assets/imd150t.png';
 import headerBg from './assets/bg3.jpg';
+import emblemLogo from './assets/emblem.gif';
+import imdLogoc from './assets/imd_logoc.gif';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster, toast } from 'react-hot-toast';
 import {
@@ -162,55 +164,36 @@ function Header({ onMenuClick, darkMode, setDarkMode }) {
   return (
     <div className="sticky top-0 z-30">
       {/* ═══ OFFICIAL RMC NAGPUR BANNER (Exact Replica) ═══ */}
-      <div
-        className="w-full relative"
-        style={{
-          backgroundImage: `url(${headerBg})`,
-          backgroundSize: 'cover',
-          borderBottom: 'none'
-        }}
-      >
-        <div className="flex items-center justify-between min-h-[70px] w-full px-2">
-          {/* LEFT: Combined Emblem & Logo */}
-          <div className="flex-shrink-0 flex items-center justify-end" style={{ width: '100px', padding: '3px' }}>
-            <img src={combinedLogo} alt="Government of India / IMD Logo"
-              className="h-[80px] border-0" style={{ padding: '7px' }}
-              onError={e => { e.target.style.display = 'none'; }} />
-          </div>
-
-          {/* CENTER: Title */}
-          <div className="flex-1 text-center py-2 flex flex-col items-center justify-center">
-            <h1 style={{
-              fontSize: '34px', color: '#99FF0', fontWeight: 'bold',
-              textShadow: '2px 2px #FF6633', letterSpacing: '2px',
-              fontFamily: 'courier'
-            }}>
-              Regional Meteorological Centre, Nagpur
-            </h1>
-            <h2 style={{
-              fontSize: '18px', color: '#003399', fontWeight: 'bold',
-              fontFamily: 'courier', marginTop: '2px'
-            }}>
-              India Meteorological Department, Ministry of Earth Sciences
-            </h2>
-            <h3 style={{
-              fontSize: '18px', color: '#330000', fontWeight: 'bold',
-              fontFamily: 'courier', marginTop: '2px'
-            }}>
-              Government of India
-            </h3>
-          </div>
-
-          {/* RIGHT: 150 Years IMD */}
-          <div className="flex items-center flex-shrink-0">
-             <div style={{ width: '100px', padding: '3px' }} className="flex items-center justify-center">
-                <img src={imd150tLogo} alt="150 Years IMD"
-                  className="h-[75px] border-0" style={{ padding: '7px' }}
-                  onError={e => { e.target.style.display = 'none'; }} />
-             </div>
-          </div>
-        </div>
-      </div>
+      <center>
+        <table width="100%" border="0" cellSpacing="0" cellPadding="0" style={{ backgroundImage: `url(${headerBg})`, backgroundSize: 'cover' }}>
+          <tbody>
+            <tr height="70">
+              <td width="100" align="right" style={{ padding: '3px', verticalAlign: 'middle' }} valign="middle">
+                <img src={emblemLogo} height="80" border="0" style={{ padding: '7px' }} alt="Emblem" />
+              </td>
+              <td align="center" style={{ verticalAlign: 'middle' }} valign="middle">
+                <span style={{ fontSize: '34px', color: '#99FF00', fontWeight: 'bold', fontFamily: 'courier', textShadow: '2px 2px #FF6633', letterSpacing: '2px' }}>
+                  Regional Meteorological Centre, Nagpur
+                </span>
+                <br />
+                <span style={{ fontSize: '18px', color: '#003399', fontWeight: 'bold', fontFamily: "'courier'" }}>
+                  India Meteorological Department, Ministry of Earth Sciences
+                </span>
+                <br />
+                <span style={{ fontSize: '18px', color: '#330000', fontWeight: 'bold', fontFamily: "'courier'" }}>
+                  Government of India
+                </span>
+              </td>
+              <td width="100" style={{ padding: '3px', verticalAlign: 'middle' }} valign="middle">
+                <img src={imd150tLogo} height="75" border="0" style={{ padding: '7px' }} alt="150 Years IMD" />
+              </td>
+              <td width="100" style={{ padding: '3px', verticalAlign: 'middle' }} valign="middle">
+                <img src={imdLogoc} height="80" border="0" style={{ padding: '7px' }} alt="IMD Logo" />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </center>
 
       {/* ═══ DARK BLUE NAV BAR ═══ */}
       <div style={{
