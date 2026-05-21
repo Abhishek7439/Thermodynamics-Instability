@@ -9,7 +9,7 @@
 
 **A real-time weather analytics, AI-assisted lookup, and report automation platform for government meteorological operations.**
 
-[🌐 Live Admin Dashboard (Deploy URL)](#) · [📖 Project Documentation](#)
+[💻 View GitHub Repository](https://github.com/Abhishek7439/weatherdesk-rmc-nagpur) · [📖 Project Documentation](https://github.com/Abhishek7439/weatherdesk-rmc-nagpur#readme)
 
 </div>
 
@@ -37,9 +37,9 @@
       <br/><sub>React + Vite frontend, Express mock backend, API Gateway</sub>
     </td>
     <td align="center">
-      <img src="docs/pert_chart.png" alt="PERT Chart" width="100%"/>
-      <br/><b>📊 Project PERT Chart</b>
-      <br/><sub>Critical path, implementation timeline, workflow milestones</sub>
+      <img src="docs/reports_ui.png" alt="Reports Automation" width="100%"/>
+      <br/><b>📄 Report Automation & Exports</b>
+      <br/><sub>1-click official bulletins, PDF/DOCX/CSV generation</sub>
     </td>
   </tr>
 </table>
