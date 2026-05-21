@@ -55,8 +55,8 @@ function Sidebar({ isOpen, onClose, darkMode }) {
         {/* Logo area */}
         <div className="p-4 border-b border-blue-900/30">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 flex items-center justify-center flex-shrink-0 bg-white rounded-lg p-1 shadow-md">
-              <img src="/images/imd_logoc.gif" alt="IMD Logo" className="w-full h-full object-contain" />
+            <div className="h-12 flex items-center justify-center flex-shrink-0 bg-white rounded-lg p-1 shadow-md">
+              <img src="/images/combined_logo.png" alt="IMD Logo" className="w-auto h-full object-contain" />
             </div>
             <div>
               <h1 className="font-bold text-white text-sm leading-tight">WeatherDesk</h1>
@@ -168,9 +168,9 @@ function Header({ onMenuClick, darkMode, setDarkMode }) {
         }}
       >
         <div className="flex items-center justify-between min-h-[70px] w-full px-2">
-          {/* LEFT: Government of India Emblem */}
+          {/* LEFT: Combined Emblem & Logo */}
           <div className="flex-shrink-0 flex items-center justify-end" style={{ width: '100px', padding: '3px' }}>
-            <img src="/images/emblem.gif" alt="Government of India Emblem"
+            <img src="/images/combined_logo.png" alt="Government of India / IMD Logo"
               className="h-[80px] border-0" style={{ padding: '7px' }}
               onError={e => { e.target.style.display = 'none'; }} />
           </div>
@@ -198,16 +198,11 @@ function Header({ onMenuClick, darkMode, setDarkMode }) {
             </h3>
           </div>
 
-          {/* RIGHT: 150 Years IMD + IMD Logo */}
+          {/* RIGHT: 150 Years IMD */}
           <div className="flex items-center flex-shrink-0">
              <div style={{ width: '100px', padding: '3px' }} className="flex items-center justify-center">
                 <img src="/images/imd150t.png" alt="150 Years IMD"
                   className="h-[75px] border-0" style={{ padding: '7px' }}
-                  onError={e => { e.target.style.display = 'none'; }} />
-             </div>
-             <div style={{ width: '100px', padding: '3px' }} className="flex items-center justify-center">
-                <img src="/images/imd_logoc.gif" alt="IMD Logo"
-                  className="h-[80px] border-0" style={{ padding: '7px' }}
                   onError={e => { e.target.style.display = 'none'; }} />
              </div>
           </div>
