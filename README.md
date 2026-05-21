@@ -9,7 +9,7 @@
 
 **A real-time weather analytics, AI-assisted lookup, and report automation platform for government meteorological operations.**
 
-[💻 View GitHub Repository](https://github.com/Abhishek7439/weatherdesk-rmc-nagpur) · [📖 Project Documentation](https://github.com/Abhishek7439/weatherdesk-rmc-nagpur#readme)
+[🌐 Live Admin Dashboard](https://Abhishek7439.github.io/weatherdesk-rmc-nagpur)
 
 </div>
 
