@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { BrowserRouter as Router, Routes, Route, NavLink, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, NavLink, useLocation } from 'react-router-dom';
+import combinedLogo from './assets/combined_logo.png';
+import imd150tLogo from './assets/imd150t.png';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster, toast } from 'react-hot-toast';
 import {
@@ -56,7 +58,7 @@ function Sidebar({ isOpen, onClose, darkMode }) {
         <div className="p-4 border-b border-blue-900/30">
           <div className="flex items-center gap-3 mb-3">
             <div className="h-12 flex items-center justify-center flex-shrink-0 bg-white rounded-lg p-1 shadow-md">
-              <img src={`${import.meta.env.BASE_URL}images/combined_logo.png`} alt="IMD Logo" className="w-auto h-full object-contain" />
+              <img src={combinedLogo} alt="IMD Logo" className="w-auto h-full object-contain" />
             </div>
             <div>
               <h1 className="font-bold text-white text-sm leading-tight">WeatherDesk</h1>
@@ -170,7 +172,7 @@ function Header({ onMenuClick, darkMode, setDarkMode }) {
         <div className="flex items-center justify-between min-h-[70px] w-full px-2">
           {/* LEFT: Combined Emblem & Logo */}
           <div className="flex-shrink-0 flex items-center justify-end" style={{ width: '100px', padding: '3px' }}>
-            <img src={`${import.meta.env.BASE_URL}images/combined_logo.png`} alt="Government of India / IMD Logo"
+            <img src={combinedLogo} alt="Government of India / IMD Logo"
               className="h-[80px] border-0" style={{ padding: '7px' }}
               onError={e => { e.target.style.display = 'none'; }} />
           </div>
@@ -201,7 +203,7 @@ function Header({ onMenuClick, darkMode, setDarkMode }) {
           {/* RIGHT: 150 Years IMD */}
           <div className="flex items-center flex-shrink-0">
              <div style={{ width: '100px', padding: '3px' }} className="flex items-center justify-center">
-                <img src={`${import.meta.env.BASE_URL}images/imd150t.png`} alt="150 Years IMD"
+                <img src={imd150tLogo} alt="150 Years IMD"
                   className="h-[75px] border-0" style={{ padding: '7px' }}
                   onError={e => { e.target.style.display = 'none'; }} />
              </div>
@@ -372,7 +374,7 @@ function App() {
   }, []);
 
   return (
-    <Router basename={import.meta.env.BASE_URL}>
+    <Router>
       <div className={`min-h-screen ${darkMode ? '' : 'light-mode'}`}
         style={{ background: darkMode ? '#050d1a' : '#f0f4f8' }}>
         <Toaster position="top-right" />
