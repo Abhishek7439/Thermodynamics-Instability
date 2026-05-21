@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { HashRouter as Router, Routes, Route, NavLink, useLocation } from 'react-router-dom';
 import combinedLogo from './assets/combined_logo.png';
 import imd150tLogo from './assets/imd150t.png';
+import headerBg from './assets/bg3.jpg';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster, toast } from 'react-hot-toast';
 import {
@@ -164,7 +165,7 @@ function Header({ onMenuClick, darkMode, setDarkMode }) {
       <div
         className="w-full relative"
         style={{
-          backgroundImage: 'url(/images/bg3.jpg)',
+          backgroundImage: `url(${headerBg})`,
           backgroundSize: 'cover',
           borderBottom: 'none'
         }}
