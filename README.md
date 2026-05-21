@@ -9,7 +9,7 @@
 
 **A real-time weather analytics, AI-assisted lookup, and report automation platform for government meteorological operations.**
 
-[🌐 Live Admin Dashboard](https://Abhishek7439.github.io/weatherdesk-rmc-nagpur)
+[🌐 Live Admin Dashboard](https://weatherdesk-rmc-nagpur.surge.sh)
 
 </div>
 
