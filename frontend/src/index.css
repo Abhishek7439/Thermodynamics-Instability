@@ -820,13 +820,13 @@ a { color: inherit; text-decoration: none; }
 
 /* Light yellow alternating row logic or hover */
 .obs-table-official tbody tr {
-  background: #ffffe0;
+  background: #ffffee;
 }
 .obs-table-official tbody tr:nth-child(even) {
-  background: #ffffff;
+  background: #ffffee;
 }
 .obs-table-official tbody tr:hover {
-  background: #fdf5e6;
+  background: #ddffff;
 }
 
 .obs-table-official .obs-city {

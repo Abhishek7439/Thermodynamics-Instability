@@ -19,13 +19,14 @@ export default function Observations() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchLiveWeather().then(data => {
+    setLoading(true);
+    fetchLiveWeather(selectedRegion).then(data => {
       setLiveData(data);
       setLoading(false);
     });
-  }, []);
+  }, [selectedRegion]);
 
-  const filteredCities = liveData.filter(c => c.region === selectedRegion);
+  const filteredCities = liveData; // backend now returns just the cities for this region
   const observedDate = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
   if (loading) {

@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const cheerio = require('cheerio');
 
 const app = express();
 app.use(cors());
@@ -39,43 +40,88 @@ const getWmoCondition = (code) => {
   return 'Clear Sky';
 };
 
-app.get('/api/weather', (req, res) => {
-  // We format the exact static IMD data into the API shape the frontend expects
-  const formattedData = exactOfficialData.map(c => ({
-    id: c.id,
-    city: c.city,
-    region: c.region,
-    temperature: {
-      max: c.maxTemp,
-      maxChange: c.maxChange24h,
-      maxDeparture: c.maxDeparture,
-      min: c.minTemp,
-      minChange: c.minChange24h,
-      minDeparture: c.minDeparture
-    },
-    humidity: {
-      morning: c.humidityMorning,
-      evening: c.humidityEvening
-    },
-    rainfall: {
-      last24h: c.rainfall24hr,
-      last9h: c.rainfall9hr
-    },
-    analysis: {
-      heatwave: c.alertLevel === 'warning',
-      alertLevel: c.alertLevel,
-      trend: c.trend,
-      forecastConfidence: '85%'
-    },
-    lastUpdated: new Date().toISOString(),
-    isRealTime: true
-  }));
+const regionToSubdiv = {
+  'Vidarbha Region': 26,
+  'Marathwada Region': 25,
+  'Madhya Maharashtra Region': 24,
+  'Mumbai & Konkan Region': 23,
+  'West Madhya Pradesh': 19,
+  'East Madhya Pradesh': 20,
+  'Chhattisgarh': 27
+};
 
-  return res.json({
-    success: true,
-    data: formattedData,
-    source: 'imd_official_exact'
-  });
+app.get('/api/weather', async (req, res) => {
+  const regionName = req.query.region || 'Vidarbha Region';
+  const subdiv = regionToSubdiv[regionName] || 26;
+
+  try {
+    const response = await fetch(`http://imdnagpur.gov.in/pages/observations.php?subdiv=${subdiv}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch from IMD: ${response.status}`);
+    }
+    
+    const html = await response.text();
+    const $ = cheerio.load(html);
+    
+    const formattedData = [];
+    $('tr').each((i, row) => {
+      const cols = $(row).find('td');
+      const rowData = [];
+      cols.each((j, col) => {
+        rowData.push($(col).text().trim());
+      });
+      
+      // Filter strictly: length must be at least 10, and first column must be an uppercase city name
+      if (rowData.length >= 10 && /^[A-Z][A-Z\s]+$/.test(rowData[0])) {
+        const parseNum = (val) => val === '' || val === '---' || isNaN(parseFloat(val)) ? null : parseFloat(val);
+        
+        formattedData.push({
+          id: i,
+          city: rowData[0],
+          region: regionName,
+          temperature: {
+            max: parseNum(rowData[1]),
+            maxChange: parseNum(rowData[2]),
+            maxDeparture: parseNum(rowData[3]),
+            min: parseNum(rowData[4]),
+            minChange: parseNum(rowData[5]),
+            minDeparture: parseNum(rowData[6])
+          },
+          humidity: {
+            morning: parseNum(rowData[7]),
+            evening: parseNum(rowData[8])
+          },
+          rainfall: {
+            last24h: parseNum(rowData[9]),
+            last9h: parseNum(rowData[10])
+          },
+          analysis: {
+            heatwave: parseNum(rowData[1]) >= 40,
+            alertLevel: parseNum(rowData[1]) >= 40 ? 'warning' : 'normal',
+            trend: 'Stable',
+            forecastConfidence: '85%'
+          },
+          lastUpdated: new Date().toISOString(),
+          isRealTime: true
+        });
+      }
+    });
+
+    return res.json({
+      success: true,
+      data: formattedData,
+      source: 'imd_official_live_scrape'
+    });
+  } catch (err) {
+    console.error("Live Scrape Failed:", err);
+    return res.status(500).json({ success: false, error: "Failed to scrape data" });
+  }
 });
 
 app.get('/api/forecast', (req, res) => {

@@ -8,9 +8,10 @@ const API_BASE_URL = window.location.hostname === 'localhost' || window.location
  * The backend proxies the request to the official IMD API using the configured API Key.
  * If the API Key is missing or the request fails, the backend returns fallback simulated data.
  */
-export const fetchLiveWeather = async () => {
+export const fetchLiveWeather = async (region = '') => {
   try {
-    const response = await fetch(`${API_BASE_URL}/weather`);
+    const query = region ? `?region=${encodeURIComponent(region)}` : '';
+    const response = await fetch(`${API_BASE_URL}/weather${query}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }

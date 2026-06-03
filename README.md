@@ -100,14 +100,14 @@
 ┌──────────────────▼──────────────────────────────────────────┐
 │                  EXPRESS BACKEND                             │
 │                                                              │
-│  Endpoints:                                                  │
-│  ├── /api/weather   (Live dynamic weather feed)              │
-│  ├── /api/forecast  (7-day predictive models)                │
-│                                                              │
-│  Mock Generation Engine:                                     │
-│  ├── randomizes temps between 40-47°C                        │
-│  ├── injects dynamic heatwave alerts                         │
-│  └── simulates 0-15mm rainfall variables                     │
+│  Endpoints:                                                  
+  ◦ /api/weather   (Live dynamic weather feed)              
+  ◦ /api/forecast  (7-day predictive models)                
+                                                              
+  Live Web Scraping Engine:                                     
+  ◦ actively fetches HTML from IMD official portal                        
+  ◦ parses region subdivisions via Cheerio                         
+  ◦ serves real-time data dynamically with zero caching                     │
 └──────────────────┬──────────────────────────────────────────┘
                    │  Static Build Pipeline
 ┌──────────────────▼──────────────────────────────────────────┐
