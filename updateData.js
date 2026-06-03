@@ -1,17 +1,8 @@
-// Mock Weather Data for RMC Nagpur - WeatherDesk MVP
-// Reference: https://www.imdnagpur.gov.in/pages/observations.php
+const fs = require('fs');
+const path = './frontend/src/data/weatherData.js';
+let content = fs.readFileSync(path, 'utf8');
 
-export const regions = [
-  'Vidarbha Region',
-  'Marathwada Region',
-  'Madhya Maharashtra Region',
-  'Mumbai & Konkan Region',
-  'West Madhya Pradesh',
-  'East Madhya Pradesh',
-  'Chhattisgarh',
-];
-
-export const weatherData = [
+const newWeatherData = `export const weatherData = [
   // VIDARBHA REGION (Exact official data from screenshot)
   { id: 1, city: 'Akola', region: 'Vidarbha Region', maxTemp: 41.0, maxChange24h: -1.5, maxDeparture: -0.8, minTemp: 30.0, minChange24h: 5.8, minDeparture: 1.5, humidityMorning: 52, humidityEvening: null, rainfall24hr: 0.0, rainfall9hr: null },
   { id: 2, city: 'Amravati', region: 'Vidarbha Region', maxTemp: 38.8, maxChange24h: -2.4, maxDeparture: -1.5, minTemp: 24.4, minChange24h: 1.1, minDeparture: -0.8, humidityMorning: 51, humidityEvening: null, rainfall24hr: 0.0, rainfall9hr: null },
@@ -50,97 +41,8 @@ export const weatherData = [
   // CHHATTISGARH
   { id: 24, city: 'Raipur', region: 'Chhattisgarh', maxTemp: 42.5, maxChange24h: -1.5, maxDeparture: -0.5, minTemp: 28.0, minChange24h: 2.0, minDeparture: 1.5, humidityMorning: 45, humidityEvening: null, rainfall24hr: 0.0, rainfall9hr: null },
   { id: 25, city: 'Bilaspur', region: 'Chhattisgarh', maxTemp: 43.2, maxChange24h: -0.5, maxDeparture: 0.5, minTemp: 29.0, minChange24h: 1.0, minDeparture: 2.0, humidityMorning: 40, humidityEvening: null, rainfall24hr: 0.0, rainfall9hr: null }
-];
+];`;
 
-export const alertTicker = [
-  '🔴 HEATWAVE WARNING: Wardha, Chandrapur districts — Temperatures likely to exceed 44°C on 22-23 May 2026',
-  '🟠 HEATWAVE WATCH: Nagpur, Aurangabad, Raipur — Maximum temperatures 2-3°C above normal expected',
-  '🟡 Pre-Monsoon Activity: Gadchiroli, Bhandara, Gondia districts may receive thunderstorms/lightning on 23-24 May 2026',
-  '🟢 Normal Weather: Amravati, Buldana, Washim districts — No major weather event expected in next 48 hours',
-  '⚡ Lightning Alert: Isolated thunderstorm activity likely over East Vidarbha on 23 May 2026 evening',
-  '🌧️ Rainfall Advisory: Pre-monsoon showers expected to begin in southern Maharashtra districts from 25 May 2026',
-  '☀️ UV Index Alert: Very High UV levels (9-10) across Vidarbha — Use sun protection 10 AM to 4 PM IST',
-];
-
-export const regionalSummary = {
-  vidarbha: {
-    name: 'Vidarbha Region',
-    avgMaxTemp: 31.2,
-    avgMinTemp: 23.8,
-    totalRainfall: 0,
-    alertCount: 2,
-    cities: 12,
-    dominantWeather: 'Hot & Dry',
-    status: 'warning',
-  },
-  marathwada: {
-    name: 'Marathwada Region',
-    avgMaxTemp: 37.5,
-    avgMinTemp: 24.3,
-    totalRainfall: 0,
-    alertCount: 3,
-    cities: 8,
-    dominantWeather: 'Severe Heat',
-    status: 'danger',
-  },
-  madhyaMaharashtra: {
-    name: 'Madhya Maharashtra',
-    avgMaxTemp: 35.8,
-    avgMinTemp: 22.6,
-    totalRainfall: 0,
-    alertCount: 1,
-    cities: 6,
-    dominantWeather: 'Hot & Partly Cloudy',
-    status: 'watch',
-  },
-  konkan: {
-    name: 'Mumbai & Konkan',
-    avgMaxTemp: 33.5,
-    avgMinTemp: 27.8,
-    totalRainfall: 5.2,
-    alertCount: 0,
-    cities: 5,
-    dominantWeather: 'Humid & Showery',
-    status: 'normal',
-  },
-  chhattisgarh: {
-    name: 'Chhattisgarh',
-    avgMaxTemp: 40.4,
-    avgMinTemp: 27.2,
-    totalRainfall: 0,
-    alertCount: 2,
-    cities: 4,
-    dominantWeather: 'Extreme Heat',
-    status: 'danger',
-  },
-};
-
-export const extendedForecast = {
-  days: ['21 May', '22 May', '23 May', '24 May', '25 May', '26 May', '27 May'],
-  nagpur: {
-    maxTemps: [42.6, 44, 43.5, 41, 39, 38, 40],
-    minTemps: [27.8, 29, 28.5, 27, 25, 24, 26],
-    rainfall: [0, 0, 0, 5, 12, 8, 3],
-    humidity: [41, 36, 38, 48, 62, 58, 52],
-    confidence: [95, 90, 85, 78, 70, 65, 60],
-  },
-};
-
-export const chatbotResponses = {
-  today: {
-    text: "Today's weather for Nagpur: Maximum temperature 42.6°C, Minimum 27.8°C. Relative humidity: 41% (morning), 28% (evening). No rainfall recorded in last 24 hours. Heatwave Watch is in effect. Please avoid outdoor activities during 11 AM – 4 PM IST.",
-    suggestions: ['7-day forecast', 'Rainfall probability', 'District alerts'],
-  },
-  forecast: {
-    text: "The 5-day extended range forecast for Nagpur: Temperatures remain above normal (42-44°C) through 23 May. Pre-monsoon thunderstorm activity expected on 24-25 May with 40-60% rainfall probability. Temperature expected to moderate from 25 May onwards.",
-    suggestions: ['Humidity trend', 'Heat index', 'Regional comparison'],
-  },
-  rainfall: {
-    text: "Rainfall probability for Nagpur in next 7 days: 21 May: 5%, 22 May: 5%, 23 May: 15%, 24 May: 45%, 25 May: 70%, 26 May: 60%, 27 May: 35%. Pre-monsoon activity is expected to increase from 24 May.",
-    suggestions: ['City weather', 'Warning alerts', 'Temperature trend'],
-  },
-  alerts: {
-    text: "Current weather alerts for Vidarbha Region:\n🔴 HEATWAVE WARNING: Wardha, Chandrapur (22-23 May)\n🟠 HEATWAVE WATCH: Nagpur, Akola, Amravati\n⚡ LIGHTNING ALERT: East Vidarbha (Gadchiroli, Bhandara) on 23 May evening\n\nAll district headquarters advised to take preventive action.",
-    suggestions: ['Nagpur forecast', 'Rainfall data', 'Temperature stats'],
-  },
-};
+content = content.replace(/export const weatherData = \[[\s\S]*?\];/m, newWeatherData);
+fs.writeFileSync(path, content, 'utf8');
+console.log('weatherData.js updated successfully.');
