@@ -3,7 +3,15 @@ import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { fetchLiveWeather } from '../services/api';
 
-const regionsList = ['Vidarbha Region', 'Marathwada', 'Madhya Maharashtra'];
+const regionsList = [
+  'Vidarbha Region', 
+  'Marathwada Region', 
+  'Madhya Maharashtra Region', 
+  'Mumbai & Konkan Region',
+  'West Madhya Pradesh',
+  'East Madhya Pradesh',
+  'Chhattisgarh'
+];
 
 export default function Observations() {
   const [selectedRegion, setSelectedRegion] = useState('Vidarbha Region');
@@ -36,9 +44,11 @@ export default function Observations() {
     >
       {/* Title */}
       <h2 className="obs-title">Weather Observations</h2>
-      <hr className="obs-title-line" />
+      
+      {/* Top Rainbow Line */}
+      <div className="obs-rainbow-line"></div>
 
-      {/* Region Tabs */}
+      {/* Region Tabs (Arranged like official site) */}
       <div className="obs-region-tabs">
         {regionsList.map(region => (
           <button
@@ -51,35 +61,38 @@ export default function Observations() {
         ))}
       </div>
 
+      {/* Bottom Rainbow Line */}
+      <div className="obs-rainbow-line mb-4"></div>
+
       {/* Region Label */}
       <p className="obs-region-label">
-        {selectedRegion} :
+        {selectedRegion} (Maharashtra) :
       </p>
 
       {/* Observations Table — Exact official format */}
       <div className="obs-table-wrapper">
-        <table className="obs-table">
+        <table className="obs-table-official">
           <thead>
             {/* Group Header Row */}
-            <tr>
-              <th rowSpan="2" className="obs-group-header" style={{ minWidth: '100px' }}>City</th>
-              <th colSpan="3" className="obs-group-header">Temperature (°C)</th>
-              <th colSpan="3" className="obs-group-header">Temperature (°C)</th>
-              <th colSpan="2" className="obs-group-header">Relative Humidity (%)</th>
-              <th colSpan="2" className="obs-group-header">Rainfall (mm)</th>
+            <tr className="obs-table-header-row">
+              <th rowSpan="2" style={{ minWidth: '120px' }}>City</th>
+              <th colSpan="3">Temperature (°C)</th>
+              <th colSpan="3">Temperature (°C)</th>
+              <th colSpan="2">Relative Humidity (%)</th>
+              <th colSpan="2">Rainfall (mm)</th>
             </tr>
             {/* Sub Header Row */}
-            <tr>
+            <tr className="obs-table-header-row">
               <th>Maximum</th>
-              <th>24 hrs Change</th>
+              <th>24 Hrs Change</th>
               <th>Departure</th>
               <th>Minimum</th>
-              <th>24 hrs Change</th>
+              <th>24 Hrs Change</th>
               <th>Departure</th>
               <th>at 0830 hrs IST</th>
               <th>at 1730 hrs IST</th>
-              <th>last 24 hrs upto 0830 hrs IST</th>
-              <th>last 9 hrs upto 1730 hrs IST</th>
+              <th>last 24 hrs upto<br/>0830 hrs IST</th>
+              <th>last 9 hrs upto<br/>1730 hrs IST</th>
             </tr>
           </thead>
           <tbody>
