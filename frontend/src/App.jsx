@@ -20,7 +20,7 @@ import { alertTicker } from './data/weatherData';
 
 const navItems = [
   { path: '/', icon: LayoutDashboard, label: 'Dashboard', badge: null },
-  { path: '/observations', icon: CloudRain, label: 'Observations', badge: '12' },
+  { path: '/observations', icon: CloudRain, label: 'Today\'s Observations', badge: '12' },
   { path: '/forecast', icon: TrendingUp, label: 'Forecast', badge: null },
   { path: '/analytics', icon: BarChart3, label: 'Analytics', badge: null },
   { path: '/reports', icon: FileText, label: 'Reports', badge: '3' },
@@ -49,8 +49,7 @@ function Sidebar({ isOpen, onClose, darkMode }) {
         initial={false}
         animate={{ x: isOpen ? 0 : -260 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed left-0 top-0 h-full w-64 z-50 lg:relative lg:translate-x-0 sidebar-gradient border-r border-blue-900/30 flex flex-col"
-        style={{ minHeight: '100vh' }}
+        className="fixed left-0 top-0 h-full w-64 z-40 lg:relative lg:translate-x-0 sidebar-gradient border-r border-blue-900/30 flex flex-col"
       >
         {/* Logo area */}
         <div className="p-4 border-b border-blue-900/30">
@@ -72,6 +71,7 @@ function Sidebar({ isOpen, onClose, darkMode }) {
 
         {/* Navigation */}
         <nav className="flex-1 py-4 overflow-y-auto">
+          {/* App Navigation */}
           <div className="px-3 mb-2">
             <span className="text-[10px] font-semibold text-blue-600 uppercase tracking-widest">Main Menu</span>
           </div>
@@ -102,6 +102,65 @@ function Sidebar({ isOpen, onClose, darkMode }) {
               )}
             </NavLink>
           ))}
+
+          {/* Official RMC Nagpur Navigation Tabs */}
+          <div className="mt-6 mb-2 border-t border-blue-900/30 pt-4">
+            <div className="px-3 mb-2">
+              <span className="text-[10px] font-semibold text-amber-500 uppercase tracking-widest">Official RMC Tabs</span>
+            </div>
+            
+            <div className="space-y-1">
+              {/* Weather Analysis */}
+              <div className="mx-2 rounded-lg bg-blue-900/20">
+                <div className="px-4 py-2 text-sm font-semibold text-blue-200 flex items-center justify-between cursor-pointer">
+                  <span>Weather Analysis</span>
+                  <ChevronRight size={14} className="text-blue-400 rotate-90" />
+                </div>
+                <div className="px-4 pb-2 pt-1 flex flex-col space-y-2">
+                  <NavLink 
+                    to="/observations" 
+                    className={({ isActive }) => `text-xs pl-4 border-l ${isActive ? 'text-white border-blue-400 font-semibold' : 'text-blue-300 hover:text-white border-blue-700/50'}`}
+                    onClick={() => window.innerWidth < 1024 && onClose()}
+                  >
+                    Today's Observations
+                  </NavLink>
+                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">All India Weather Bulletin</a>
+                </div>
+              </div>
+
+              {/* Forecasts & Warnings */}
+              <div className="mx-2 rounded-lg bg-blue-900/20">
+                <div className="px-4 py-2 text-sm font-semibold text-blue-200 flex items-center justify-between cursor-pointer">
+                  <span>Forecasts & Warnings</span>
+                  <ChevronRight size={14} className="text-blue-400 rotate-90" />
+                </div>
+                <div className="px-4 pb-2 pt-1 flex flex-col space-y-2">
+                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">Regional Weather Forecast</a>
+                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">Precipitation Forecast</a>
+                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">Warning Forecast</a>
+                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">Districtwise Warnings</a>
+                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">Local (City) Forecast</a>
+                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">Agromet Advisories</a>
+                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">Impact Based Forecast</a>
+                </div>
+              </div>
+
+              {/* Reports */}
+              <div className="mx-2 rounded-lg bg-blue-900/20">
+                <div className="px-4 py-2 text-sm font-semibold text-blue-200 flex items-center justify-between cursor-pointer">
+                  <span>Reports</span>
+                  <ChevronRight size={14} className="text-blue-400 rotate-90" />
+                </div>
+                <div className="px-4 pb-2 pt-1 flex flex-col space-y-2">
+                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">DRMS Rainfall Report</a>
+                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">Rainfall Activity</a>
+                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">Regional Daily Report</a>
+                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">Weekly Weather Report</a>
+                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">Seasonal Data</a>
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Quick Links */}
           <div className="px-3 mt-6 mb-2">
@@ -176,23 +235,26 @@ function Header({ onMenuClick, darkMode, setDarkMode }) {
           </div>
 
           {/* CENTER: Title */}
-          <div className="flex-1 text-center py-2 flex flex-col items-center justify-center">
+          <div className="flex-1 text-center py-1 flex flex-col items-center justify-center">
             <h1 style={{
-              fontSize: '34px', color: '#99FF0', fontWeight: 'bold',
-              textShadow: '2px 2px #FF6633', letterSpacing: '2px',
-              fontFamily: 'courier'
+              fontSize: '28px', color: '#39ff14', fontWeight: '900',
+              textShadow: '1px 1px 0 #ff4500, -1px -1px 0 #ff4500, 1px -1px 0 #ff4500, -1px 1px 0 #ff4500, 2px 2px 4px rgba(0,0,0,0.5)', 
+              letterSpacing: '1px',
+              fontFamily: 'Courier New, Courier, monospace',
+              margin: '0', padding: '0', lineHeight: '1.2'
             }}>
               Regional Meteorological Centre, Nagpur
             </h1>
             <h2 style={{
-              fontSize: '18px', color: '#003399', fontWeight: 'bold',
-              fontFamily: 'courier', marginTop: '2px'
+              fontSize: '14px', color: '#4169e1', fontWeight: 'bold',
+              fontFamily: 'Courier New, Courier, monospace', margin: '2px 0 0 0',
+              textShadow: '1px 1px 2px rgba(255,255,255,0.8)'
             }}>
               India Meteorological Department, Ministry of Earth Sciences
             </h2>
             <h3 style={{
-              fontSize: '18px', color: '#330000', fontWeight: 'bold',
-              fontFamily: 'courier', marginTop: '2px'
+              fontSize: '12px', color: '#8b7355', fontWeight: 'bold',
+              fontFamily: 'Courier New, Courier, monospace', margin: '2px 0 0 0'
             }}>
               Government of India
             </h3>
@@ -216,63 +278,46 @@ function Header({ onMenuClick, darkMode, setDarkMode }) {
 
       {/* ═══ DARK BLUE NAV BAR ═══ */}
       <div style={{
-        backgroundColor: '#0a2a5e', // Attempting to match the dark blue from the screenshot
-        borderBottom: '1px solid #1a3a6e',
+        backgroundColor: '#003366', // Matched dark blue
+        borderTop: '2px solid #333',
+        borderBottom: '2px solid #333',
       }}>
-        <div className="flex items-center justify-between px-3 py-1">
+        <div className="flex items-center justify-between px-2">
+          {/* Left Date/Time */}
+          <div className="hidden lg:flex flex-col items-center justify-center px-4 border-r border-[#1a4a82] min-w-[150px]">
+            <span className="text-yellow-300 text-[11px] font-bold">
+              {format(time, 'EEEE, dd MMMM yyyy')}
+            </span>
+            <span className="text-yellow-300 text-[11px] font-bold mt-0.5">
+              {format(time, 'hh:mm:ss a')} IST
+            </span>
+          </div>
+
           <button onClick={onMenuClick}
-            className="lg:hidden p-1.5 rounded text-blue-300 hover:bg-blue-900/40 hover:text-white transition-all">
-            <Menu size={16} />
+            className="lg:hidden p-2 text-white hover:bg-[#1a4a82] transition-all">
+            <Menu size={18} />
           </button>
 
-          <div className="hidden lg:flex items-center gap-0 text-[11px] font-semibold flex-1">
-            {[
-              { label: 'HOME', path: '/' },
-              { label: 'OBSERVATIONS', path: '/observations' },
-              { label: 'FORECAST', path: '/forecast' },
-              { label: 'ANALYTICS', path: '/analytics' },
-              { label: 'REPORTS', path: '/reports' },
-              { label: 'AI ASSISTANT', path: '/chatbot' },
-              { label: 'ADMIN', path: '/admin' },
-            ].map(item => (
-              <NavLink key={item.path} to={item.path} end={item.path === '/'}
-                className={({ isActive }) =>
-                  `px-3 py-1.5 transition-all border-r border-blue-800/40 tracking-wide ${
-                    isActive ? 'bg-blue-600/30 text-cyan-300' : 'text-blue-200 hover:bg-blue-800/40 hover:text-white'
-                  }`
-                }>
-                {item.label}
-              </NavLink>
-            ))}
+          {/* Navigation Links */}
+          <div className="hidden lg:flex items-center text-[10.5px] font-semibold text-white">
+            <NavLink to="/" className={({ isActive }) => `px-4 py-3 border-r border-[#1a4a82] hover:bg-[#1a4a82] ${isActive ? 'bg-[#1a4a82]' : ''}`}>H O M E</NavLink>
+            <a href="#" className="px-3 py-3 border-r border-[#1a4a82] hover:bg-[#1a4a82]">IMD Website for General Public</a>
+            <a href="#" className="px-3 py-3 border-r border-[#1a4a82] hover:bg-[#1a4a82]">About RMC Nagpur ▾</a>
+            <a href="#" className="px-3 py-3 border-r border-[#1a4a82] hover:bg-[#1a4a82]">About MoES & IMD ▾</a>
+            <a href="#" className="px-3 py-3 border-r border-[#1a4a82] hover:bg-[#1a4a82]">Publications ▾</a>
+            <a href="#" className="px-3 py-3 border-r border-[#1a4a82] hover:bg-[#1a4a82]">Miscellaneous ▾</a>
+            <a href="#" className="px-3 py-3 border-r border-[#1a4a82] hover:bg-[#1a4a82]">Do's & Dont's ▾</a>
+            <a href="#" className="px-3 py-3 border-r border-[#1a4a82] hover:bg-[#1a4a82]">FAQs ▾</a>
+            <a href="#" className="px-3 py-3 border-r border-[#1a4a82] hover:bg-[#1a4a82]">Contact Us</a>
           </div>
 
-          <div className="flex items-center gap-1.5 ml-auto">
-            <button className="relative p-1.5 rounded text-blue-300 hover:bg-blue-900/40 transition-all"
-              onClick={() => toast.success('3 new weather alerts.', {
-                icon: '🔔', style: { background: '#0f2847', color: '#e2e8f0', border: '1px solid #3b82c4' }
-              })}>
-              <Bell size={14} />
-              {notifications > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-red-500 rounded-full flex items-center justify-center text-[8px] text-white font-bold">
-                  {notifications}
-                </span>
-              )}
-            </button>
-            <button onClick={() => setDarkMode(!darkMode)}
-              className="p-1.5 rounded text-blue-300 hover:bg-blue-900/40 transition-all">
-              {darkMode ? <Sun size={14} /> : <Moon size={14} />}
-            </button>
-            <div className="hidden md:flex items-center gap-1.5 px-2 py-1 rounded text-[10px]"
-              style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)' }}>
-              <div className="w-1.5 h-1.5 rounded-full bg-green-400 pulse-dot" />
-              <span className="text-green-400 font-semibold">LIVE</span>
-            </div>
-            <div className="hidden md:flex items-center gap-1 px-2 py-1 text-[10px] text-blue-400">
-              <span className="text-blue-500">हिंदी</span>
-              <span className="text-blue-700">|</span>
-              <span className="text-blue-300">Hindi</span>
-            </div>
+          <div className="flex-1"></div>
+
+          {/* Right Hindi Toggle */}
+          <div className="hidden lg:flex items-center px-4 border-l border-[#1a4a82] h-full py-3">
+            <span className="text-yellow-400 text-[12px] font-bold">हिन्दी / Hindi</span>
           </div>
+
         </div>
       </div>
 
@@ -378,40 +423,42 @@ function App() {
 
   return (
     <Router>
-      <div className={`min-h-screen ${darkMode ? '' : 'light-mode'}`}
+      <div className={`h-screen overflow-hidden ${darkMode ? '' : 'light-mode'}`}
         style={{ background: darkMode ? '#050d1a' : '#f0f4f8' }}>
         <Toaster position="top-right" />
-        <div className="flex" style={{ minHeight: '100vh' }}>
-          {/* Sidebar */}
-          <div className="hidden lg:block flex-shrink-0">
-            <Sidebar isOpen={true} onClose={() => {}} darkMode={darkMode} />
-          </div>
-          {/* Mobile sidebar */}
-          <div className="lg:hidden">
-            <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} darkMode={darkMode} />
-          </div>
+        <div className="flex flex-col h-full">
+          <Header
+            onMenuClick={() => setSidebarOpen(true)}
+            darkMode={darkMode}
+            setDarkMode={setDarkMode}
+          />
+          <div className="flex flex-1 overflow-hidden">
+            {/* Sidebar */}
+            <div className="hidden lg:block flex-shrink-0 h-full">
+              <Sidebar isOpen={true} onClose={() => {}} darkMode={darkMode} />
+            </div>
+            {/* Mobile sidebar */}
+            <div className="lg:hidden">
+              <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} darkMode={darkMode} />
+            </div>
 
-          {/* Main content */}
-          <div className="flex-1 flex flex-col min-w-0">
-            <Header
-              onMenuClick={() => setSidebarOpen(true)}
-              darkMode={darkMode}
-              setDarkMode={setDarkMode}
-            />
-            <main className="flex-1 overflow-auto">
-              <AnimatePresence mode="wait">
-                <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/observations" element={<Observations />} />
-                  <Route path="/forecast" element={<Forecast />} />
-                  <Route path="/analytics" element={<Analytics />} />
-                  <Route path="/reports" element={<Reports />} />
-                  <Route path="/chatbot" element={<Chatbot />} />
-                  <Route path="/admin" element={<Admin />} />
-                </Routes>
-              </AnimatePresence>
-            </main>
-            <Footer />
+            {/* Main content */}
+            <div className="flex-1 flex flex-col min-w-0 h-full">
+              <main className="flex-1 overflow-auto">
+                <AnimatePresence mode="wait">
+                  <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/observations" element={<Observations />} />
+                    <Route path="/forecast" element={<Forecast />} />
+                    <Route path="/analytics" element={<Analytics />} />
+                    <Route path="/reports" element={<Reports />} />
+                    <Route path="/chatbot" element={<Chatbot />} />
+                    <Route path="/admin" element={<Admin />} />
+                  </Routes>
+                </AnimatePresence>
+                <Footer />
+              </main>
+            </div>
           </div>
         </div>
       </div>
