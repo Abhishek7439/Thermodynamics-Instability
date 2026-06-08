@@ -7,6 +7,7 @@ import {
 } from 'recharts';
 import { CloudRain, Thermometer, TrendingUp, Activity, Loader2 } from 'lucide-react';
 import { fetchLiveWeather, fetchForecast } from '../services/api';
+import { useRegion } from '../context/RegionContext';
 import { extendedForecast } from '../data/weatherData'; // Keeping this for the static extended structural data if needed, but we will mostly use API
 
 const tabs = ['2-Day', '5-Day', '7-Day Extended'];
@@ -37,6 +38,7 @@ const forecastIcons = {
 };
 
 export default function Forecast() {
+  const { selectedRegion } = useRegion();
   const [activeTab, setActiveTab] = useState('7-Day Extended');
   const [selectedCity, setSelectedCity] = useState('Nagpur');
   
@@ -45,17 +47,22 @@ export default function Forecast() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      const [live, forecast] = await Promise.all([
-        fetchLiveWeather(),
-        fetchForecast(selectedCity)
-      ]);
+    setLoading(true);
+    fetchLiveWeather(selectedRegion).then(live => {
       setLiveData(live);
-      setForecastDataList(forecast);
+      // Reset selected city to first city of new region
+      const firstCity = live.length > 0 ? live[0].city : 'Nagpur';
+      setSelectedCity(firstCity);
       setLoading(false);
-    };
-    loadData();
+    });
+  }, [selectedRegion]);
+
+  useEffect(() => {
+    if (selectedCity) {
+      fetchForecast(selectedCity).then(forecast => {
+        setForecastDataList(forecast);
+      });
+    }
   }, [selectedCity]);
 
   if (loading) {

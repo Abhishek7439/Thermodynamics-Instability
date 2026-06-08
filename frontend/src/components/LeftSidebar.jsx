@@ -8,6 +8,7 @@ const sidebarSections = [
     title: 'Weather Analysis',
     defaultOpen: true,
     items: [
+      { label: 'Weather Dashboard', path: '/dashboard' },
       { label: "Today's Observations", path: '/observations' },
       { label: 'All India Weather Bulletin', href: 'https://mausam.imd.gov.in/imd_latest/contents/all_india_forcast_bulletin.php' },
     ],

@@ -2,17 +2,20 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { fetchLiveWeather } from '../services/api';
+import { useRegion } from '../context/RegionContext';
 
 export default function Home() {
+  const { selectedRegion } = useRegion();
   const [liveData, setLiveData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchLiveWeather().then(data => {
+    setLoading(true);
+    fetchLiveWeather(selectedRegion).then(data => {
       setLiveData(data);
       setLoading(false);
     });
-  }, []);
+  }, [selectedRegion]);
 
   if (loading) {
     return (

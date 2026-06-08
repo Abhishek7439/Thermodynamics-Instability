@@ -9,14 +9,17 @@ import { Toaster } from 'react-hot-toast';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 
+import { RegionProvider } from './context/RegionContext';
 import LeftSidebar from './components/LeftSidebar';
 import RightSidebar from './components/RightSidebar';
 import Home from './pages/Home';
+import Dashboard from './pages/Dashboard';
 import Observations from './pages/Observations';
 import Forecast from './pages/Forecast';
 import Reports from './pages/Reports';
 import Analytics from './pages/Analytics';
 import InfoPage from './pages/InfoPage';
+import AIAssistant from './components/AIAssistant';
 
 /* ═══════════════════════════════════════════════════
    TOP NAVIGATION DROPDOWN DATA
@@ -313,6 +316,7 @@ function AppContent() {
         <main className="main-content">
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/observations" element={<Observations />} />
             <Route path="/forecast/regional" element={<Forecast />} />
             <Route path="/reports/seasonal" element={<Analytics />} />
@@ -340,6 +344,9 @@ function AppContent() {
 
       {/* Footer */}
       <Footer />
+
+      {/* RMC AI Assistant Chatbot */}
+      <AIAssistant />
     </div>
   );
 }
@@ -347,7 +354,9 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <AppContent />
+      <RegionProvider>
+        <AppContent />
+      </RegionProvider>
     </Router>
   );
 }

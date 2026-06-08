@@ -10,6 +10,7 @@ import {
   TrendingUp, MapPin, Activity, Zap, BarChart3, Loader2
 } from 'lucide-react';
 import { fetchLiveWeather } from '../services/api';
+import { useRegion } from '../context/RegionContext';
 import CityCard from '../components/CityCard';
 
 const alertColors = {
@@ -63,15 +64,17 @@ const StatCard = ({ icon: Icon, title, value, unit, subtitle, color, delay }) =>
 );
 
 export default function Dashboard() {
+  const { selectedRegion } = useRegion();
   const [liveData, setLiveData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchLiveWeather().then(data => {
+    setLoading(true);
+    fetchLiveWeather(selectedRegion).then(data => {
       setLiveData(data);
       setLoading(false);
     });
-  }, []);
+  }, [selectedRegion]);
 
   if (loading) {
     return (
@@ -104,7 +107,7 @@ export default function Dashboard() {
         <div>
           <h2 className="text-2xl font-black gradient-text">Weather Intelligence Dashboard</h2>
           <p className="text-blue-400 text-sm mt-0.5">
-            Vidarbha Regional Overview •{' '}
+            {selectedRegion} Overview •{' '}
             <span className="text-cyan-400">Live Data Sync</span>
           </p>
         </div>

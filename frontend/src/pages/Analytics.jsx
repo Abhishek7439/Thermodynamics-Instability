@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   ScatterChart, Scatter, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   Cell, Legend, ComposedChart, Area, AreaChart
 } from 'recharts';
-import { BarChart3, TrendingUp, Droplets, Thermometer, Map, Activity } from 'lucide-react';
-import { weatherData } from '../data/weatherData';
+import { BarChart3, TrendingUp, Droplets, Thermometer, Map, Activity, Loader2 } from 'lucide-react';
+import { fetchLiveWeather } from '../services/api';
+import { useRegion } from '../context/RegionContext';
 
 const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#22c55e', '#06b6d4', '#3b82f6', '#a78bfa', '#f43f5e', '#10b981', '#8b5cf6', '#ec4899', '#14b8a6'];
 
@@ -25,50 +26,135 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-const vidarbhaCities = weatherData.filter(c => c.region === 'Vidarbha Region');
-
 export default function Analytics() {
+  const { selectedRegion } = useRegion();
   const [activeMetric, setActiveMetric] = useState('temperature');
+  const [liveData, setLiveData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const tempData = vidarbhaCities.map(c => ({
+  useEffect(() => {
+    setLoading(true);
+    fetchLiveWeather(selectedRegion).then(data => {
+      setLiveData(data);
+      setLoading(false);
+    });
+  }, [selectedRegion]);
+
+  if (loading) {
+    return (
+      <div className="h-full w-full flex items-center justify-center p-20">
+        <Loader2 className="animate-spin text-blue-500 w-10 h-10" />
+      </div>
+    );
+  }
+
+  const tempData = liveData.map(c => ({
     name: c.city,
-    max: c.maxTemp,
-    min: c.minTemp,
-    departure: c.maxDeparture,
+    max: c.temperature?.max,
+    min: c.temperature?.min,
+    departure: c.temperature?.maxDeparture,
   })).filter(c => c.max != null);
 
-  const humidityData = vidarbhaCities.map(c => ({
+  const humidityData = liveData.map(c => ({
     name: c.city,
-    morning: c.humidityMorning,
-    evening: c.humidityEvening,
+    morning: c.humidity?.morning,
+    evening: c.humidity?.evening,
   })).filter(c => c.morning != null);
 
-  const rainfallData = weatherData.map(c => ({
+  const rainfallData = liveData.map(c => ({
     name: c.city,
-    rf24: c.rainfall24hr,
-    rf9: c.rainfall9hr,
+    rf24: c.rainfall?.last24h,
+    rf9: c.rainfall?.last9h,
   }));
 
-  const heatmapData = vidarbhaCities.map((c, i) => ({
-    name: c.city,
-    value: c.maxTemp || 28,
-    humidity: c.humidityMorning || 40,
-    alert: c.alertLevel,
-  }));
-
-  const departureData = vidarbhaCities
-    .filter(c => c.maxDeparture != null)
+  const departureData = liveData
+    .filter(c => c.temperature?.maxDeparture != null)
     .map(c => ({
       name: c.city,
-      departure: c.maxDeparture,
-      fill: c.maxDeparture > 0 ? '#ef4444' : '#3b82f6',
+      departure: c.temperature.maxDeparture,
+      fill: c.temperature.maxDeparture > 0 ? '#ef4444' : '#3b82f6',
     }));
 
-  const scatterData = weatherData.map(c => ({
-    x: c.humidityMorning || 40,
-    y: c.maxTemp || 28,
+  const scatterData = liveData.map(c => ({
+    x: c.humidity?.morning || 40,
+    y: c.temperature?.max || 28,
     name: c.city,
   }));
+
+  // Compute statistics dynamically
+  const maxTemps = liveData.filter(c => c.temperature?.max != null).map(c => c.temperature.max);
+  const minTemps = liveData.filter(c => c.temperature?.min != null).map(c => c.temperature.min);
+  const morningRH = liveData.filter(c => c.humidity?.morning != null).map(c => c.humidity.morning);
+  const eveningRH = liveData.filter(c => c.humidity?.evening != null).map(c => c.humidity.evening);
+  const rf24 = liveData.filter(c => c.rainfall?.last24h != null).map(c => c.rainfall.last24h);
+
+  const findMaxCity = (arr, field) => {
+    if (!arr.length) return '--';
+    const val = Math.max(...arr);
+    const city = liveData.find(c => c[field.split('.')[0]]?.[field.split('.')[1]] === val);
+    return `${val} (${city?.city || '--'})`;
+  };
+
+  const findMinCity = (arr, field) => {
+    if (!arr.length) return '--';
+    const val = Math.min(...arr);
+    const city = liveData.find(c => c[field.split('.')[0]]?.[field.split('.')[1]] === val);
+    return `${val} (${city?.city || '--'})`;
+  };
+
+  const avg = (arr) => arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : '--';
+
+  const avgDep = (field) => {
+    const vals = liveData.filter(c => c.temperature?.[field] != null).map(c => c.temperature[field]);
+    if (!vals.length) return '—';
+    const a = (vals.reduce((s, v) => s + v, 0) / vals.length).toFixed(1);
+    return a > 0 ? `+${a}` : a;
+  };
+
+  const statsRows = [
+    {
+      param: 'Maximum Temperature (°C)',
+      max: maxTemps.length ? `${Math.max(...maxTemps).toFixed(1)} (${liveData.find(c => c.temperature?.max === Math.max(...maxTemps))?.city || '--'})` : '--',
+      min: maxTemps.length ? `${Math.min(...maxTemps).toFixed(1)} (${liveData.find(c => c.temperature?.max === Math.min(...maxTemps))?.city || '--'})` : '--',
+      avg: avg(maxTemps),
+      dep: avgDep('maxDeparture'),
+      depColor: '#f97316',
+    },
+    {
+      param: 'Minimum Temperature (°C)',
+      max: minTemps.length ? `${Math.max(...minTemps).toFixed(1)} (${liveData.find(c => c.temperature?.min === Math.max(...minTemps))?.city || '--'})` : '--',
+      min: minTemps.length ? `${Math.min(...minTemps).toFixed(1)} (${liveData.find(c => c.temperature?.min === Math.min(...minTemps))?.city || '--'})` : '--',
+      avg: avg(minTemps),
+      dep: avgDep('minDeparture'),
+      depColor: '#f59e0b',
+    },
+    {
+      param: 'Morning RH (%)',
+      max: morningRH.length ? `${Math.max(...morningRH)} (${liveData.find(c => c.humidity?.morning === Math.max(...morningRH))?.city || '--'})` : '--',
+      min: morningRH.length ? `${Math.min(...morningRH)} (${liveData.find(c => c.humidity?.morning === Math.min(...morningRH))?.city || '--'})` : '--',
+      avg: avg(morningRH),
+      dep: '—',
+      depColor: '#3b82f6',
+    },
+    {
+      param: 'Evening RH (%)',
+      max: eveningRH.length ? `${Math.max(...eveningRH)} (${liveData.find(c => c.humidity?.evening === Math.max(...eveningRH))?.city || '--'})` : '--',
+      min: eveningRH.length && Math.min(...eveningRH) !== Infinity ? `${Math.min(...eveningRH)} (${liveData.find(c => c.humidity?.evening === Math.min(...eveningRH))?.city || '--'})` : '--',
+      avg: avg(eveningRH),
+      dep: '—',
+      depColor: '#3b82f6',
+    },
+    {
+      param: 'Rainfall 24h (mm)',
+      max: rf24.length ? `${Math.max(...rf24).toFixed(1)}` : '0.0',
+      min: rf24.length ? `${Math.min(...rf24).toFixed(1)}` : '0.0',
+      avg: avg(rf24),
+      dep: '—',
+      depColor: '#60a5e0',
+    },
+  ];
+
+  const observedDate = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
 
   return (
     <motion.div
@@ -79,7 +165,7 @@ export default function Analytics() {
       {/* Header */}
       <div>
         <h2 className="text-xl font-bold gradient-text mb-1">Weather Analytics & Visualization</h2>
-        <p className="text-blue-400 text-sm">Deep-dive analysis across Central India districts</p>
+        <p className="text-blue-400 text-sm">{selectedRegion} — Deep-dive analysis</p>
       </div>
 
       {/* Metric tabs */}
@@ -117,12 +203,12 @@ export default function Analytics() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-white font-bold text-sm">
-                {activeMetric === 'temperature' && 'District Temperature Comparison (Vidarbha)'}
+                {activeMetric === 'temperature' && `District Temperature Comparison (${selectedRegion})`}
                 {activeMetric === 'humidity' && 'Relative Humidity — Morning vs Evening'}
                 {activeMetric === 'rainfall' && 'Rainfall Distribution (24h & 9h)'}
                 {activeMetric === 'departure' && 'Temperature Departure from Normal'}
               </h3>
-              <p className="text-blue-400 text-xs">21 May 2026 — Observed data</p>
+              <p className="text-blue-400 text-xs">{observedDate} — Observed data</p>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={260}>
@@ -187,7 +273,7 @@ export default function Analytics() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-white font-bold text-sm">Temperature vs Humidity</h3>
-              <p className="text-blue-400 text-xs">Correlation scatter across all districts</p>
+              <p className="text-blue-400 text-xs">Correlation scatter — {selectedRegion}</p>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={220}>
@@ -232,7 +318,7 @@ export default function Analytics() {
           </ResponsiveContainer>
         </motion.div>
 
-        {/* Heat index heatmap */}
+        {/* Temperature severity map */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -242,13 +328,14 @@ export default function Analytics() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-white font-bold text-sm">Temperature Severity Map</h3>
-              <p className="text-blue-400 text-xs">Alert level by city</p>
+              <p className="text-blue-400 text-xs">Alert level by city — {selectedRegion}</p>
             </div>
           </div>
           <div className="space-y-2">
-            {vidarbhaCities.filter(c => c.maxTemp != null).map((city, i) => {
-              const pct = Math.min(((city.maxTemp - 20) / 30) * 100, 100);
-              const color = city.maxTemp >= 42 ? '#ef4444' : city.maxTemp >= 38 ? '#f97316' : city.maxTemp >= 34 ? '#f59e0b' : '#22c55e';
+            {liveData.filter(c => c.temperature?.max != null).map((city, i) => {
+              const pct = Math.min(((city.temperature.max - 20) / 30) * 100, 100);
+              const color = city.temperature.max >= 42 ? '#ef4444' : city.temperature.max >= 38 ? '#f97316' : city.temperature.max >= 34 ? '#f59e0b' : '#22c55e';
+              const alertLevel = city.analysis?.alertLevel || 'GREEN';
               return (
                 <div key={i} className="flex items-center gap-3">
                   <span className="text-blue-300 text-xs w-20 flex-shrink-0">{city.city}</span>
@@ -260,14 +347,15 @@ export default function Analytics() {
                       className="absolute left-0 top-0 h-full rounded flex items-center px-2"
                       style={{ background: `linear-gradient(90deg, ${color}80, ${color})` }}
                     >
-                      <span className="text-white text-[9px] font-bold">{city.maxTemp}°C</span>
+                      <span className="text-white text-[9px] font-bold">{city.temperature.max}°C</span>
                     </motion.div>
                   </div>
                   <span className={`text-[10px] font-bold w-14 text-right ${
-                    city.alertLevel === 'warning' || city.alertLevel === 'danger' ? 'text-red-400' :
-                    city.alertLevel === 'watch' ? 'text-amber-400' : 'text-green-400'
+                    alertLevel === 'RED' ? 'text-red-400' :
+                    alertLevel === 'ORANGE' ? 'text-amber-400' :
+                    alertLevel === 'YELLOW' ? 'text-yellow-400' : 'text-green-400'
                   }`}>
-                    {city.alertLevel === 'normal' ? 'Normal' : city.alertLevel === 'watch' ? 'Watch' : 'Warning'}
+                    {alertLevel}
                   </span>
                 </div>
               );
@@ -293,7 +381,7 @@ export default function Analytics() {
       >
         <h3 className="text-white font-bold text-sm mb-4 flex items-center gap-2">
           <BarChart3 size={16} className="text-cyan-400" />
-          Statistical Summary — Vidarbha Region (21 May 2026)
+          Statistical Summary — {selectedRegion} ({observedDate})
         </h3>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
@@ -307,48 +395,7 @@ export default function Analytics() {
               </tr>
             </thead>
             <tbody>
-              {[
-                {
-                  param: 'Maximum Temperature (°C)',
-                  max: '42.6 (Nagpur)',
-                  min: '25.4 (Gadchiroli)',
-                  avg: '30.8',
-                  dep: '+2.1',
-                  depColor: '#f97316',
-                },
-                {
-                  param: 'Minimum Temperature (°C)',
-                  max: '27.8 (Nagpur)',
-                  min: '19.8 (Gadchiroli)',
-                  avg: '23.1',
-                  dep: '+0.8',
-                  depColor: '#f59e0b',
-                },
-                {
-                  param: 'Morning RH (%)',
-                  max: '67 (Bhandara)',
-                  min: '31 (Chandrapur)',
-                  avg: '42',
-                  dep: '-5',
-                  depColor: '#3b82f6',
-                },
-                {
-                  param: 'Evening RH (%)',
-                  max: '38 (Bhandara)',
-                  min: '17 (Chandrapur)',
-                  avg: '26',
-                  dep: '-8',
-                  depColor: '#3b82f6',
-                },
-                {
-                  param: 'Rainfall 24h (mm)',
-                  max: '0.0',
-                  min: '0.0',
-                  avg: '0.0',
-                  dep: '—',
-                  depColor: '#60a5e0',
-                },
-              ].map((row, i) => (
+              {statsRows.map((row, i) => (
                 <tr key={i} className="border-b border-blue-900/20 hover:bg-blue-900/10">
                   <td className="px-3 py-2.5 text-white font-medium">{row.param}</td>
                   <td className="px-3 py-2.5 text-center text-orange-300">{row.max}</td>

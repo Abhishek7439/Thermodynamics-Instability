@@ -2,21 +2,16 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { fetchLiveWeather } from '../services/api';
-
-const regionsList = [
-  'Vidarbha Region', 
-  'Marathwada Region', 
-  'Madhya Maharashtra Region', 
-  'Mumbai & Konkan Region',
-  'West Madhya Pradesh',
-  'East Madhya Pradesh',
-  'Chhattisgarh'
-];
+import { useRegion, regionsList } from '../context/RegionContext';
+import ObservationCharts from '../components/ObservationCharts';
+import { PremiumCards, PremiumTable } from '../components/PremiumViews';
+import { LayoutGrid, List } from 'lucide-react';
 
 export default function Observations() {
-  const [selectedRegion, setSelectedRegion] = useState('Vidarbha Region');
+  const { selectedRegion, setSelectedRegion } = useRegion();
   const [liveData, setLiveData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('cards');
 
   useEffect(() => {
     setLoading(true);
@@ -43,128 +38,68 @@ export default function Observations() {
       animate={{ opacity: 1 }}
       className="obs-page"
     >
-      {/* Title */}
-      <h2 className="obs-title">Weather Observations</h2>
-      
-      {/* Top Rainbow Line */}
-      <div className="obs-rainbow-line"></div>
+      {/* Title & Subtitle */}
+      <div className="mb-4">
+        <h2 className="text-xl font-bold text-[#60a5fa] mb-1">
+          Weather Observations
+        </h2>
+        <p className="text-xs text-[#60a5fa] font-medium">
+          Live data from surface observatories across Central India • Observed on {observedDate}
+        </p>
+      </div>
 
-      {/* Region Tabs (Arranged like official site) */}
-      <div className="obs-region-tabs">
-        {regionsList.map(region => (
+      {/* Header section with Tabs and Toggle */}
+      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between mb-6 gap-4">
+        {/* Region Tabs */}
+        <div className="flex flex-wrap gap-2">
+          {regionsList.map(region => (
+            <button
+              key={region}
+              onClick={() => setSelectedRegion(region)}
+              className={`px-5 py-1.5 rounded-full text-[11px] font-bold border transition-all duration-300 ${
+                selectedRegion === region 
+                  ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white border-transparent shadow-[0_0_10px_rgba(37,99,235,0.3)]' 
+                  : 'bg-[#0a1e3d]/80 text-blue-200 border-cyan-500/30 hover:border-cyan-400'
+              }`}
+            >
+              {region}
+            </button>
+          ))}
+        </div>
+
+        {/* View Toggle */}
+        <div className="flex items-center bg-[#0a1e3d]/80 rounded-full border border-blue-900/50 p-1 shrink-0">
           <button
-            key={region}
-            onClick={() => setSelectedRegion(region)}
-            className={`obs-region-tab ${selectedRegion === region ? 'active' : ''}`}
+            onClick={() => setViewMode('cards')}
+            className={`flex items-center justify-center px-4 py-1 rounded-full text-[10px] font-bold transition-all ${viewMode === 'cards' ? 'bg-blue-600 text-white' : 'text-blue-300 hover:text-white'}`}
           >
-            {region}
+            Cards
           </button>
-        ))}
+          <button
+            onClick={() => setViewMode('table')}
+            className={`flex items-center justify-center px-4 py-1 rounded-full text-[10px] font-bold transition-all ${viewMode === 'table' ? 'bg-blue-600 text-white' : 'text-blue-300 hover:text-white'}`}
+          >
+            Table
+          </button>
+        </div>
       </div>
 
-      {/* Bottom Rainbow Line */}
-      <div className="obs-rainbow-line mb-4"></div>
 
-      {/* Region Label */}
-      <p className="obs-region-label">
-        {selectedRegion} (Maharashtra) :
-      </p>
 
-      {/* Observations Table — Exact official format */}
-      <div className="obs-table-wrapper">
-        <table className="obs-table-official">
-          <thead>
-            {/* Group Header Row */}
-            <tr className="obs-table-header-row">
-              <th rowSpan="2" style={{ minWidth: '120px' }}>City</th>
-              <th colSpan="3">Temperature (°C)</th>
-              <th colSpan="3">Temperature (°C)</th>
-              <th colSpan="2">Relative Humidity (%)</th>
-              <th colSpan="2">Rainfall (mm)</th>
-            </tr>
-            {/* Sub Header Row */}
-            <tr className="obs-table-header-row">
-              <th>Maximum</th>
-              <th>24 Hrs Change</th>
-              <th>Departure</th>
-              <th>Minimum</th>
-              <th>24 Hrs Change</th>
-              <th>Departure</th>
-              <th>at 0830 hrs IST</th>
-              <th>at 1730 hrs IST</th>
-              <th>last 24 hrs upto<br/>0830 hrs IST</th>
-              <th>last 9 hrs upto<br/>1730 hrs IST</th>
-            </tr>
-          </thead>
-          <tbody>
-            {/* Observed Date Row */}
-            <tr className="obs-date-row">
-              <td colSpan="4" style={{ textAlign: 'center' }}>
-                Observed On {observedDate}
-              </td>
-              <td colSpan="3"></td>
-              <td colSpan="2" style={{ textAlign: 'center' }}>
-                Observed On {observedDate}
-              </td>
-              <td colSpan="2"></td>
-            </tr>
-
-            {/* Data Rows */}
-            {filteredCities.map((city) => (
-              <tr key={city.id}>
-                <td className="obs-city">{city.city}</td>
-                {/* Maximum Temp */}
-                <td className={city.temperature?.max >= 40 ? 'obs-temp-high' : ''}>
-                  {city.temperature?.max ?? '---'}
-                </td>
-                {/* 24 hrs Change (Max) */}
-                <td className={
-                  city.temperature?.maxChange > 0 ? 'obs-temp-change-pos' :
-                  city.temperature?.maxChange < 0 ? 'obs-temp-change-neg' : ''
-                }>
-                  {city.temperature?.maxChange != null ? city.temperature.maxChange.toFixed(1) : '---'}
-                </td>
-                {/* Departure (Max) */}
-                <td className={
-                  city.temperature?.maxDeparture > 0 ? 'obs-departure-pos' :
-                  city.temperature?.maxDeparture < 0 ? 'obs-departure-neg' : ''
-                }>
-                  {city.temperature?.maxDeparture != null ? city.temperature.maxDeparture.toFixed(1) : '---'}
-                </td>
-                {/* Minimum Temp */}
-                <td>{city.temperature?.min ?? '---'}</td>
-                {/* 24 hrs Change (Min) */}
-                <td className={
-                  city.temperature?.minChange > 0 ? 'obs-temp-change-pos' :
-                  city.temperature?.minChange < 0 ? 'obs-temp-change-neg' : ''
-                }>
-                  {city.temperature?.minChange != null ? city.temperature.minChange.toFixed(1) : '---'}
-                </td>
-                {/* Departure (Min) */}
-                <td className={
-                  city.temperature?.minDeparture > 0 ? 'obs-departure-pos' :
-                  city.temperature?.minDeparture < 0 ? 'obs-departure-neg' : ''
-                }>
-                  {city.temperature?.minDeparture != null ? city.temperature.minDeparture.toFixed(1) : '---'}
-                </td>
-                {/* Humidity AM */}
-                <td>{city.humidity?.morning ?? '---'}</td>
-                {/* Humidity PM */}
-                <td>{city.humidity?.evening ?? '---'}</td>
-                {/* Rainfall 24h */}
-                <td>{city.rainfall?.last24h?.toFixed(1) ?? '0.0'}</td>
-                {/* Rainfall 9h */}
-                <td>{city.rainfall?.last9h?.toFixed(1) ?? '0.0'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* Dynamic View Render */}
+      {viewMode === 'cards' ? (
+        <PremiumCards data={filteredCities} region={selectedRegion} />
+      ) : (
+        <PremiumTable data={filteredCities} />
+      )}
 
       {/* Note */}
       <p className="obs-note">
         *** Departures are based on Pentad Normals 1991-2020 *** | Source: Regional Meteorological Centre, Nagpur
       </p>
+
+      {/* Official Parameter Charts */}
+      <ObservationCharts data={filteredCities} />
     </motion.div>
   );
 }

@@ -4,6 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const cheerio = require('cheerio');
+const { saveObservations, getHistory } = require('./db');
 
 const app = express();
 app.use(cors());
@@ -50,9 +51,23 @@ const regionToSubdiv = {
   'Chhattisgarh': 27
 };
 
+// In-memory cache for scraped data
+const scrapeCache = {};
+const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+
 app.get('/api/weather', async (req, res) => {
   const regionName = req.query.region || 'Vidarbha Region';
   const subdiv = regionToSubdiv[regionName] || 26;
+
+  // Check cache first
+  if (scrapeCache[regionName] && (Date.now() - scrapeCache[regionName].timestamp < CACHE_DURATION_MS)) {
+    console.log(`Returning cached data for ${regionName}`);
+    return res.json({
+      success: true,
+      data: scrapeCache[regionName].data,
+      source: 'imd_official_live_scrape_cached'
+    });
+  }
 
   try {
     const response = await fetch(`http://imdnagpur.gov.in/pages/observations.php?subdiv=${subdiv}`, {
@@ -113,6 +128,22 @@ app.get('/api/weather', async (req, res) => {
       }
     });
 
+    // Auto-save scraped data to the database
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (formattedData.length > 0) {
+      try {
+        saveObservations(regionName, todayStr, formattedData);
+      } catch (dbErr) {
+        console.error("Failed to auto-save observations:", dbErr);
+      }
+      
+      // Update cache
+      scrapeCache[regionName] = {
+        timestamp: Date.now(),
+        data: formattedData
+      };
+    }
+
     return res.json({
       success: true,
       data: formattedData,
@@ -148,6 +179,34 @@ app.get('/api/forecast', (req, res) => {
     data: forecast,
     source: 'imd_official_exact'
   });
+});
+
+// Manual save endpoint
+app.post('/api/observations', (req, res) => {
+  const { region, date, data } = req.body;
+  if (!region || !date || !data || !Array.isArray(data)) {
+    return res.status(400).json({ success: false, error: 'Invalid payload' });
+  }
+
+  try {
+    const count = saveObservations(region, date, data);
+    res.json({ success: true, message: `Saved ${count} records`, count });
+  } catch (err) {
+    console.error("Manual DB save failed:", err);
+    res.status(500).json({ success: false, error: 'Database error' });
+  }
+});
+
+// Retrieve history endpoint
+app.get('/api/observations/history', (req, res) => {
+  const { region, city, from, to } = req.query;
+  try {
+    const history = getHistory({ region, city, from, to });
+    res.json({ success: true, count: history.length, data: history });
+  } catch (err) {
+    console.error("History query failed:", err);
+    res.status(500).json({ success: false, error: 'Database query failed' });
+  }
 });
 
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
