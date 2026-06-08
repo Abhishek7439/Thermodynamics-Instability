@@ -10,7 +10,12 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      '/api': 'http://localhost:3001'
+      '/api': 'http://localhost:3001',
+      '/proxy-rmc': {
+        target: 'https://www.imdnagpur.gov.in',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/proxy-rmc/, '')
+      }
     }
   }
 })
