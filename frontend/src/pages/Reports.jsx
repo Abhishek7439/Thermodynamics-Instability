@@ -6,12 +6,13 @@ import { fetchLiveWeather } from '../services/api';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
+import RdwrHtmlPreview from '../components/RdwrHtmlPreview';
 
 const reportTypes = [
   {
-    id: 'daily',
-    title: 'Daily Weather Bulletin',
-    desc: 'Comprehensive daily report with all observations, forecasts, and alerts',
+    id: 'rdwr',
+    title: 'Regional Daily Weather Report',
+    desc: 'Official HTML formatted comprehensive daily report with all observations, forecasts, and alerts',
     icon: '📋',
   },
   {
@@ -102,7 +103,7 @@ Source: RMC Nagpur | www.imdnagpur.gov.in
 }
 
 export default function Reports() {
-  const [selectedType, setSelectedType] = useState('daily');
+  const [selectedType, setSelectedType] = useState('rdwr');
   const [liveData, setLiveData] = useState([]);
   const [reportContent, setReportContent] = useState('Loading data...');
   const [generating, setGenerating] = useState(false);
@@ -113,7 +114,7 @@ export default function Reports() {
   useEffect(() => {
     fetchLiveWeather().then(data => {
       setLiveData(data);
-      setReportContent(generateReportText('daily', data));
+      setReportContent(generateReportText('rdwr', data));
     });
   }, []);
 
@@ -175,12 +176,22 @@ export default function Reports() {
         a.click();
         URL.revokeObjectURL(url);
       } else if (format === 'PDF') {
-        const doc = new jsPDF();
-        doc.setFontSize(10);
-        doc.setFont('courier');
-        const splitText = doc.splitTextToSize(reportContent, 180);
-        doc.text(splitText, 15, 15);
-        doc.save(`WeatherDesk_report_${new Date().toISOString().slice(0, 10)}.pdf`);
+        if (selectedType === 'rdwr' && reportRef.current) {
+          const canvas = await html2canvas(reportRef.current, { scale: 2, backgroundColor: '#ffffff' });
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          pdf.save(`WeatherDesk_RDWR_${new Date().toISOString().slice(0, 10)}.pdf`);
+        } else {
+          const doc = new jsPDF();
+          doc.setFontSize(10);
+          doc.setFont('courier');
+          const splitText = doc.splitTextToSize(reportContent, 180);
+          doc.text(splitText, 15, 15);
+          doc.save(`WeatherDesk_report_${new Date().toISOString().slice(0, 10)}.pdf`);
+        }
       } else if (format === 'DOCX') {
         const paragraphs = reportContent.split('\n').map(line => 
           new Paragraph({
@@ -412,11 +423,17 @@ export default function Reports() {
                   key="content"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="p-4"
+                  className="p-4 overflow-auto"
                 >
-                  <pre className="text-[11px] text-green-300 font-mono whitespace-pre-wrap leading-relaxed">
-                    {reportContent}
-                  </pre>
+                  {selectedType === 'rdwr' ? (
+                    <div className="bg-gray-200 p-2 rounded max-h-[700px] overflow-auto">
+                      <RdwrHtmlPreview liveData={liveData} />
+                    </div>
+                  ) : (
+                    <pre className="text-[11px] text-green-300 font-mono whitespace-pre-wrap leading-relaxed">
+                      {reportContent}
+                    </pre>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>

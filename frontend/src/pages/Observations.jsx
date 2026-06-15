@@ -1,14 +1,17 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+
+// Simple in-memory cache for city forecasts to avoid redundant network calls
+const forecastCache = {};
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LineChart, Line, AreaChart, Area, BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine
+  BarChart, Bar, Cell, LabelList,
+  XAxis, YAxis, Tooltip, ResponsiveContainer
 } from 'recharts';
 import {
   Thermometer, Droplets, Wind, Eye, TrendingUp, TrendingDown,
   Minus, AlertTriangle, Cloud, CloudRain, Sun, Zap, MapPin
 } from 'lucide-react';
-import { weatherData, regions } from '../data/weatherData';
+import { useWeatherData } from '../context/WeatherDataContext';
 
 const alertColors = {
   normal: 'border-green-500/40 bg-green-500/10 text-green-400',
@@ -54,14 +57,71 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
+
+import { fetchForecast } from '../services/api';
+
 function CityHoverPopup({ city, position }) {
-  const timeData = city.history;
-  
+  // Existing state for chart data remains unchanged
+  const maxT = city.maxTemp;
+  const minT = city.minTemp;
+  const maxChg = parseFloat(city.maxChange);
+  const minChg = parseFloat(city.minChange);
+
+  // Forecast handling
+  const [forecast, setForecast] = useState(city.forecastDays || []);
+
+  useEffect(() => {
+    if (!city || !city.city) return;
+    // Check cache first
+    if (forecastCache[city.city]) {
+      setForecast(forecastCache[city.city]);
+      return;
+    }
+    // If not cached, fetch and store
+    fetchForecast(city.city)
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setForecast(data);
+          forecastCache[city.city] = data; // store in cache
+        }
+      })
+      .catch((err) => console.error('Failed to fetch forecast', err));
+  }, [city]);
+
+  // Derive yesterday's values: today - 24h change = yesterday
+  const tempBarData = [];
+  if (maxT != null && !isNaN(maxChg)) {
+    tempBarData.push({ name: 'Yest Max', temp: +(maxT - maxChg).toFixed(1), type: 'max-prev' });
+  }
+  if (maxT != null) {
+    tempBarData.push({ name: 'Today Max', temp: maxT, type: 'max' });
+  }
+  if (minT != null && !isNaN(minChg)) {
+    tempBarData.push({ name: 'Yest Min', temp: +(minT - minChg).toFixed(1), type: 'min-prev' });
+  }
+  if (minT != null) {
+    tempBarData.push({ name: 'Today Min', temp: minT, type: 'min' });
+  }
+
+  // Build humidity bar data from real fetched parameters
+  const humMorning = parseFloat(city.humidityMorning) || parseFloat(city.rh830);
+  const humEvening = parseFloat(city.humidityEvening) || parseFloat(city.rh1730);
+  const humBarData = [];
+  if (!isNaN(humMorning)) humBarData.push({ name: '0830 IST', humidity: humMorning });
+  if (!isNaN(humEvening)) humBarData.push({ name: '1730 IST', humidity: humEvening });
+
+  const barFills = {
+    'max': '#f97316',
+    'max-prev': '#f9731680',
+    'min': '#3b82f6',
+    'min-prev': '#3b82f680',
+  };
+
   // Smart positioning: show above if near bottom of screen
   const popupHeight = 420;
   const spaceBelow = window.innerHeight - position.y;
   const showAbove = spaceBelow < popupHeight + 40;
-  
+
   const topPos = showAbove
     ? Math.max(10, position.y - popupHeight - 10)
     : Math.min(position.y - 20, window.innerHeight - popupHeight - 20);
@@ -121,50 +181,96 @@ function CityHoverPopup({ city, position }) {
         ))}
       </div>
 
-      {/* Temperature chart */}
+      {/* 24-Hour Temperature Trend — Bar Chart (Real Data) */}
       <div className="px-3 pb-1">
         <p className="text-[10px] text-blue-400 mb-1 font-medium">24-Hour Temperature Trend</p>
-        <ResponsiveContainer width="100%" height={70}>
-          <AreaChart data={timeData} margin={{ top: 5, right: 5, left: -30, bottom: 0 }}>
-            <defs>
-              <linearGradient id={`tempGrad-${city.id}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#f97316" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <XAxis dataKey="time" tick={{ fontSize: 8, fill: '#4e7a9e' }} />
-            <YAxis tick={{ fontSize: 8, fill: '#4e7a9e' }} />
-            <Tooltip content={<CustomTooltip />} />
-            <Area
-              type="monotone"
-              dataKey="temp"
-              stroke="#f97316"
-              strokeWidth={2}
-              fill={`url(#tempGrad-${city.id})`}
-              name="Temp (°C)"
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        {tempBarData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={95}>
+            <BarChart data={tempBarData} margin={{ top: 18, right: 5, left: -25, bottom: 0 }}>
+              <XAxis dataKey="name" tick={{ fontSize: 7, fill: '#4e7a9e' }} />
+              <YAxis tick={{ fontSize: 8, fill: '#4e7a9e' }} domain={['dataMin - 2', 'dataMax + 2']} />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null;
+                  const d = payload[0].payload;
+                  return (
+                    <div className="glass rounded-lg p-2 border border-blue-700/40 text-xs">
+                      <p className="text-white font-bold">{d.name}</p>
+                      <p style={{ color: barFills[d.type] || '#fff' }}>{d.temp}°C</p>
+                    </div>
+                  );
+                }}
+              />
+              <Bar dataKey="temp" radius={[4, 4, 0, 0]} name="Temp (°C)">
+                {tempBarData.map((entry, i) => (
+                  <Cell key={i} fill={barFills[entry.type] || '#f97316'} />
+                ))}
+                <LabelList
+                  dataKey="temp"
+                  position="top"
+                  formatter={(v) => `${v}°C`}
+                  style={{ fontSize: 8, fontWeight: 700, fill: '#e2e8f0' }}
+                />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <p className="text-[9px] text-blue-500 text-center py-3">Temperature data not available</p>
+        )}
+        {/* Legend */}
+        <div className="flex items-center justify-center gap-3 mt-0.5 mb-1">
+          <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm" style={{ background: '#f9731680' }} />
+            <span className="text-[8px] text-blue-500">Yesterday</span></div>
+          <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm" style={{ background: '#f97316' }} />
+            <span className="text-[8px] text-blue-500">Today Max</span></div>
+          <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm" style={{ background: '#3b82f680' }} />
+            <span className="text-[8px] text-blue-500">Yesterday</span></div>
+          <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm" style={{ background: '#3b82f6' }} />
+            <span className="text-[8px] text-blue-500">Today Min</span></div>
+        </div>
       </div>
 
-      {/* Humidity chart */}
+      {/* Humidity — Bar Chart (Real Data) */}
       <div className="px-3 pb-3">
-        <p className="text-[10px] text-blue-400 mb-1 font-medium">Humidity (%)</p>
-        <ResponsiveContainer width="100%" height={50}>
-          <BarChart data={timeData} margin={{ top: 0, right: 5, left: -30, bottom: 0 }}>
-            <XAxis dataKey="time" tick={{ fontSize: 7, fill: '#4e7a9e' }} />
-            <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="humidity" fill="#06b6d4" radius={[2, 2, 0, 0]} name="Humidity (%)" />
-          </BarChart>
-        </ResponsiveContainer>
+        <p className="text-[10px] text-blue-400 mb-1 font-medium">Relative Humidity (%)</p>
+        {humBarData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={70}>
+            <BarChart data={humBarData} margin={{ top: 18, right: 5, left: -25, bottom: 0 }}>
+              <XAxis dataKey="name" tick={{ fontSize: 8, fill: '#4e7a9e' }} />
+              <YAxis tick={{ fontSize: 8, fill: '#4e7a9e' }} domain={[0, 100]} />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null;
+                  const d = payload[0].payload;
+                  return (
+                    <div className="glass rounded-lg p-2 border border-blue-700/40 text-xs">
+                      <p className="text-cyan-300 font-bold">{d.name}</p>
+                      <p className="text-white">{d.humidity}%</p>
+                    </div>
+                  );
+                }}
+              />
+              <Bar dataKey="humidity" fill="#06b6d4" radius={[4, 4, 0, 0]} name="RH (%)">
+                <LabelList
+                  dataKey="humidity"
+                  position="top"
+                  formatter={(v) => `${v}%`}
+                  style={{ fontSize: 9, fontWeight: 700, fill: '#e2e8f0' }}
+                />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <p className="text-[9px] text-blue-500 text-center py-2">Humidity data not available</p>
+        )}
       </div>
 
       {/* 5-day mini forecast */}
-      {city.forecastDays && city.forecastDays.length > 0 && (
+      {forecast && forecast.length > 0 && (
         <div className="px-3 pb-3">
           <p className="text-[10px] text-blue-400 mb-1.5 font-medium">5-Day Forecast</p>
           <div className="flex gap-1.5">
-            {city.forecastDays.slice(0, 5).map((day, i) => (
+            {forecast.slice(0, 5).map((day, i) => (
               <div key={i} className="flex-1 text-center bg-blue-900/20 rounded-lg py-1.5 px-1">
                 <div className="text-[9px] text-blue-400">{day.day}</div>
                 <div className="text-sm my-0.5">{day.icon}</div>
@@ -302,103 +408,17 @@ export default function Observations() {
   const [hoveredCity, setHoveredCity] = useState(null);
   const [hoverPos, setHoverPos] = useState(null);
   const [viewMode, setViewMode] = useState('table'); // 'table' | 'cards'
-  const [realTimeData, setRealTimeData] = useState([]);
-  const [observedDates, setObservedDates] = useState({ maxDate: '', minDate: '' });
-  const [regionTitle, setRegionTitle] = useState('Vidarbha Region (Maharashtra)');
-  const [loading, setLoading] = useState(true);
+
+  const {
+    observationsData: realTimeData,
+    observedDates,
+    regionTitle,
+    observationsLoading: loading,
+  } = useWeatherData();
 
   const handleHover = useCallback((city, pos) => {
     setHoveredCity(city);
     setHoverPos(pos);
-  }, []);
-
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        // Fetching real-time live data securely through Vite proxy
-        // This avoids CORS issues and pulls directly from the official website!
-        const response = await fetch('/proxy-rmc/pages/observations.php');
-        const htmlText = await response.text();
-        
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlText, 'text/html');
-        
-        // Find all rows with bgcolor="#ffffee" which are the data rows
-        const rows = doc.querySelectorAll('tr[bgcolor="#ffffee"]');
-        
-        // Extract "Observed On" dates from the 3rd header row (official site has this)
-        const headerRows = doc.querySelectorAll('tr[bgcolor="#d9edf7"]');
-        if (headerRows.length >= 3) {
-          const dateRow = headerRows[2];
-          const dateCells = dateRow.querySelectorAll('td');
-          if (dateCells.length >= 2) {
-            setObservedDates({
-              maxDate: dateCells[0]?.textContent.trim() || '',
-              minDate: dateCells[1]?.textContent.trim() || ''
-            });
-          }
-        }
-        
-        // Extract region title
-        const regionFont = doc.querySelector('font[style*="color:#ee3333"]');
-        if (regionFont) {
-          setRegionTitle(regionFont.textContent.trim().replace(/:$/, ''));
-        }
-        
-        const parsedData = Array.from(rows).map(row => {
-          const cells = row.querySelectorAll('td');
-          if (cells.length < 10) return null;
-          
-          const cityName = cells[0].textContent.trim();
-          const mockCity = weatherData.find(c => c.city.toLowerCase() === cityName.toLowerCase()) || weatherData[0];
-          
-          const parsedMaxTemp = parseFloat(cells[1]?.textContent.trim());
-          const parsedMinTemp = parseFloat(cells[4]?.textContent.trim());
-          const parsedMaxDep = parseFloat(cells[3]?.textContent.trim());
-          const parsedMaxChange = parseFloat(cells[2]?.textContent.trim());
-          
-          let trend = 'Steady';
-          if (parsedMaxChange > 0) trend = 'Rising';
-          else if (parsedMaxChange < 0) trend = 'Falling';
-          
-          return {
-            ...mockCity, // Base data for charts and history
-            id: cityName + Math.random(),
-            city: cityName.charAt(0).toUpperCase() + cityName.slice(1).toLowerCase(),
-            region: 'Vidarbha Region',
-            
-            // Parsed numeric data for Cards
-            maxTemp: !isNaN(parsedMaxTemp) ? parsedMaxTemp : null,
-            minTemp: !isNaN(parsedMinTemp) ? parsedMinTemp : null,
-            maxDeparture: !isNaN(parsedMaxDep) ? parsedMaxDep : null,
-            humidityMorning: cells[7] ? cells[7].textContent.trim() : '--',
-            humidityEvening: cells[8] ? cells[8].textContent.trim() : '--',
-            rainfall24hr: cells[9] ? cells[9].textContent.trim() : '0.0',
-            trend: trend,
-            
-            // Raw string data for the exact Table layout
-            rawMaxTemp: cells[1] ? cells[1].textContent.trim() : '',
-            maxChange: cells[2] ? cells[2].textContent.trim() : '',
-            rawMaxDeparture: cells[3] ? cells[3].textContent.trim() : '',
-            rawMinTemp: cells[4] ? cells[4].textContent.trim() : '',
-            minChange: cells[5] ? cells[5].textContent.trim() : '',
-            rawMinDeparture: cells[6] ? cells[6].textContent.trim() : '',
-            rh830: cells[7] ? cells[7].textContent.trim() : '',
-            rh1730: cells[8] ? cells[8].textContent.trim() : '',
-            rf24: cells[9] ? cells[9].textContent.trim() : '',
-            rf9: cells[10] ? cells[10].textContent.trim() : ''
-          };
-        }).filter(Boolean);
-
-        setRealTimeData(parsedData);
-      } catch (error) {
-        console.error("Failed to fetch data", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    
-    fetchData();
   }, []);
 
   return (

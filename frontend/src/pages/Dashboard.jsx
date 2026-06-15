@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   AreaChart, Area, LineChart, Line, BarChart, Bar, RadialBarChart, RadialBar,
@@ -9,7 +8,7 @@ import {
   Thermometer, CloudRain, Droplets, Wind, AlertTriangle,
   TrendingUp, MapPin, Activity, Zap, BarChart3, Loader2
 } from 'lucide-react';
-import { fetchLiveWeather } from '../services/api';
+import { useWeatherData } from '../context/WeatherDataContext';
 import CityCard from '../components/CityCard';
 
 const alertColors = {
@@ -63,15 +62,7 @@ const StatCard = ({ icon: Icon, title, value, unit, subtitle, color, delay }) =>
 );
 
 export default function Dashboard() {
-  const [liveData, setLiveData] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchLiveWeather().then(data => {
-      setLiveData(data);
-      setLoading(false);
-    });
-  }, []);
+  const { liveData, liveLoading: loading } = useWeatherData();
 
   if (loading) {
     return (
@@ -81,16 +72,24 @@ export default function Dashboard() {
     );
   }
 
+  if (!liveData || liveData.length === 0) {
+    return (
+      <div className="h-full w-full flex items-center justify-center p-20 text-white">
+        <AlertTriangle className="mr-2 text-yellow-500" /> No weather data available.
+      </div>
+    );
+  }
+
   const nagpur = liveData.find(c => c.city === 'Nagpur') || liveData[0];
-  const maxTempAvg = (liveData.reduce((acc, curr) => acc + curr.temperature.max, 0) / liveData.length).toFixed(1);
-  const rainTotal = liveData.reduce((acc, curr) => acc + curr.rainfall.last24h, 0).toFixed(1);
-  const activeAlerts = liveData.filter(c => c.analysis.alertLevel !== 'GREEN').length;
+  const maxTempAvg = (liveData.reduce((acc, curr) => acc + (curr.temperature?.max || 0), 0) / liveData.length).toFixed(1);
+  const rainTotal = liveData.reduce((acc, curr) => acc + (curr.rainfall?.last24h || 0), 0).toFixed(1);
+  const activeAlerts = liveData.filter(c => c.analysis?.alertLevel !== 'GREEN').length;
 
   const heatmapData = liveData.map(c => ({
     name: c.city,
-    temp: c.temperature.max,
-    rainfall: c.rainfall.last24h,
-    humidity: c.humidity.morning,
+    temp: c.temperature?.max || 0,
+    rainfall: c.rainfall?.last24h || 0,
+    humidity: c.humidity?.morning || 0,
   }));
 
   return (
@@ -181,18 +180,18 @@ export default function Dashboard() {
             Active Weather Alerts
           </h3>
           <div className="space-y-3 h-[260px] overflow-y-auto pr-2 custom-scrollbar">
-            {liveData.filter(c => c.analysis.alertLevel !== 'GREEN').map((alert, i) => (
+            {liveData.filter(c => c.analysis?.alertLevel && c.analysis.alertLevel !== 'GREEN').map((alert, i) => (
               <div key={i} className={`flex gap-3 p-3 rounded-xl border ${
-                alert.analysis.alertLevel === 'RED' ? alertColors.danger :
-                alert.analysis.alertLevel === 'ORANGE' ? alertColors.warning : alertColors.watch
+                alert.analysis?.alertLevel === 'RED' ? alertColors.danger :
+                alert.analysis?.alertLevel === 'ORANGE' ? alertColors.warning : alertColors.watch
               }`} style={{ background: 'rgba(0,0,0,0.2)' }}>
                 <span className="text-base flex-shrink-0">
-                  {alert.analysis.alertLevel === 'RED' ? '🔴' : alert.analysis.alertLevel === 'ORANGE' ? '🟠' : '🟡'}
+                  {alert.analysis?.alertLevel === 'RED' ? '🔴' : alert.analysis?.alertLevel === 'ORANGE' ? '🟠' : '🟡'}
                 </span>
                 <div>
-                  <p className="font-bold text-xs mb-0.5">{alert.analysis.heatwave ? 'Heatwave Warning' : 'High Temperature Alert'}</p>
+                  <p className="font-bold text-xs mb-0.5">{alert.analysis?.heatwave ? 'Heatwave Warning' : 'High Temperature Alert'}</p>
                   <p className="text-[10px] opacity-80 font-semibold">{alert.city}</p>
-                  <p className="text-[10px] opacity-70 mt-0.5">Max temp recorded: {alert.temperature.max}°C</p>
+                  <p className="text-[10px] opacity-70 mt-0.5">Max temp recorded: {alert.temperature?.max}°C</p>
                 </div>
               </div>
             ))}

@@ -17,6 +17,7 @@ import Analytics from './pages/Analytics';
 import Chatbot from './pages/Chatbot';
 import Admin from './pages/Admin';
 import { alertTicker } from './data/weatherData';
+import { WeatherDataProvider } from './context/WeatherDataContext';
 
 const navItems = [
   { path: '/', icon: LayoutDashboard, label: 'Dashboard', badge: null },
@@ -423,6 +424,7 @@ function App() {
 
   return (
     <Router>
+      <WeatherDataProvider>
       <div className={`h-screen overflow-hidden ${darkMode ? '' : 'light-mode'}`}
         style={{ background: darkMode ? '#050d1a' : '#f0f4f8' }}>
         <Toaster position="top-right" />
@@ -462,6 +464,7 @@ function App() {
           </div>
         </div>
       </div>
+      </WeatherDataProvider>
     </Router>
   );
 }
