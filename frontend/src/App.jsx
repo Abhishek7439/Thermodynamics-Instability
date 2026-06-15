@@ -1,14 +1,18 @@
-import { useState, useEffect, useRef } from 'react';
-import { BrowserRouter as Router, Routes, Route, NavLink, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { HashRouter as Router, Routes, Route, NavLink, useLocation } from 'react-router-dom';
+import headerBg from './assets/bg3.jpg';
+import emblemLogo from './assets/emblem.gif';
+import imd150tLogo from './assets/imd150t.png';
+import imdLogoc from './assets/imd_logoc.gif';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Toaster, toast } from 'react-hot-toast';
-import {
-  LayoutDashboard, CloudRain, BarChart3, FileText, MessageSquare,
-  Settings, Menu, X, Sun, Moon, Bell, Wifi, ChevronRight, Globe,
-  Thermometer, Wind, Droplets, Eye, AlertTriangle, TrendingUp, Map, Download, Share2
-} from 'lucide-react';
+import { Toaster } from 'react-hot-toast';
+import { Menu, X, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 
+import { RegionProvider } from './context/RegionContext';
+import LeftSidebar from './components/LeftSidebar';
+import RightSidebar from './components/RightSidebar';
+import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import Observations from './pages/Observations';
 import Forecast from './pages/Forecast';
@@ -18,452 +22,345 @@ import Chatbot from './pages/Chatbot';
 import Admin from './pages/Admin';
 import { alertTicker } from './data/weatherData';
 import { WeatherDataProvider } from './context/WeatherDataContext';
+import InfoPage from './pages/InfoPage';
+import AIAssistant from './components/AIAssistant';
 
-const navItems = [
-  { path: '/', icon: LayoutDashboard, label: 'Dashboard', badge: null },
-  { path: '/observations', icon: CloudRain, label: 'Today\'s Observations', badge: '12' },
-  { path: '/forecast', icon: TrendingUp, label: 'Forecast', badge: null },
-  { path: '/analytics', icon: BarChart3, label: 'Analytics', badge: null },
-  { path: '/reports', icon: FileText, label: 'Reports', badge: '3' },
-  { path: '/chatbot', icon: MessageSquare, label: 'AI Assistant', badge: 'NEW' },
-  { path: '/admin', icon: Settings, label: 'Admin Panel', badge: null },
+/* ═══════════════════════════════════════════════════
+   TOP NAVIGATION DROPDOWN DATA
+   Matches official www.imdnagpur.gov.in exactly
+   ═══════════════════════════════════════════════════ */
+const topNavItems = [
+  { label: 'H O M E', path: '/' },
+  { label: 'IMD Website for General Public', href: 'https://mausam.imd.gov.in' },
+  {
+    label: 'About RMC Nagpur',
+    children: [
+      { label: 'History', path: '/about/history' },
+      { label: 'Organisation Structure', path: '/about/organisation' },
+      { label: 'Network of Observatories', path: '/about/network' },
+      { label: 'Ex-DDGMs of RMC Nagpur', path: '/about/exddgms' },
+    ],
+  },
+  {
+    label: 'About MoES & IMD',
+    children: [
+      { label: "Hon'ble Ministers", href: 'https://mausam.imd.gov.in/imd_latest/contents/honable_minister.php' },
+      { label: 'Secretary, MOES', href: 'https://mausam.imd.gov.in/imd_latest/contents/secretory_moes.php' },
+      { label: 'Director General, IMD', href: 'https://mausam.imd.gov.in/imd_latest/contents/dgm.php' },
+      { label: 'IMD Mandate', path: '/about/mandate' },
+      { label: 'IMD Weather Services', path: '/about/services' },
+      { label: 'IMD Directory', href: 'http://metnet.imd.gov.in/imddir/' },
+      { label: 'Ex-DGMs of IMD', href: 'http://metnet.imd.gov.in/imdpis/imdweb_list_of_dgms.php' },
+    ],
+  },
+  {
+    label: 'Publications',
+    children: [
+      { label: 'IMD News', href: 'http://metnet.imd.gov.in/phps/imdweb_imdnews.php' },
+      { label: 'MAUSAM Journal', path: '/info' },
+      { label: 'ऋतुरंग', path: '/info' },
+      { label: 'Climatology', path: '/info' },
+    ],
+  },
+  {
+    label: 'Miscellaneous',
+    children: [
+      { label: 'Right to Information', path: '/rti' },
+      { label: "Citizen's/Client's Charter", href: 'https://mausam.imd.gov.in/imd_latest/contents/citizen_charter.php' },
+      { label: 'Grievance Redressal', path: '/grievance' },
+      { label: 'Sexual Harassment Complaint', path: '/info' },
+    ],
+  },
+  {
+    label: "Do's & Dont's",
+    children: [
+      { label: 'Cyclone', href: '#' },
+      { label: 'Drought', href: '#' },
+      { label: 'Flood', href: '#' },
+      { label: 'Thunderstorm & Lightning', href: '#' },
+      { label: 'Cold wave', href: '#' },
+      { label: 'Heat wave', href: '#' },
+    ],
+  },
+  {
+    label: 'FAQs',
+    children: [
+      { label: 'Thunderstorm & Lightning (English)', href: '#' },
+      { label: 'Thunderstorm & Lightning (Marathi)', href: '#' },
+    ],
+  },
+  { label: 'Contact Us', path: '/contact' },
 ];
 
-function Sidebar({ isOpen, onClose, darkMode }) {
-  return (
-    <>
-      {/* Mobile overlay */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-            onClick={onClose}
-          />
-        )}
-      </AnimatePresence>
+/* ═══════════════════════════════════════════════════
+   DROPDOWN NAV ITEM COMPONENT
+   ═══════════════════════════════════════════════════ */
+function NavDropdown({ item }) {
+  const [open, setOpen] = useState(false);
 
-      {/* Sidebar */}
-      <motion.aside
-        initial={false}
-        animate={{ x: isOpen ? 0 : -260 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed left-0 top-0 h-full w-64 z-40 lg:relative lg:translate-x-0 sidebar-gradient border-r border-blue-900/30 flex flex-col"
+  if (item.path) {
+    return (
+      <NavLink
+        to={item.path}
+        end={item.path === '/'}
+        className={({ isActive }) =>
+          `topnav-item ${isActive ? 'topnav-active' : ''}`
+        }
       >
-        {/* Logo area */}
-        <div className="p-4 border-b border-blue-900/30">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 flex items-center justify-center flex-shrink-0 bg-white rounded-lg p-1 shadow-md">
-              <img src="/images/imd_logoc.gif" alt="IMD Logo" className="w-full h-full object-contain" />
-            </div>
-            <div>
-              <h1 className="font-bold text-white text-sm leading-tight">WeatherDesk</h1>
-              <p className="text-blue-400 text-[10px] leading-tight">RMC Nagpur • v2.5.1</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <div className="w-2 h-2 rounded-full bg-green-400 pulse-dot"></div>
-            <span className="text-green-400 font-medium">System Online</span>
-            <span className="ml-auto text-blue-500">LIVE</span>
-          </div>
-        </div>
+        {item.label}
+      </NavLink>
+    );
+  }
 
-        {/* Navigation */}
-        <nav className="flex-1 py-4 overflow-y-auto">
-          {/* App Navigation */}
-          <div className="px-3 mb-2">
-            <span className="text-[10px] font-semibold text-blue-600 uppercase tracking-widest">Main Menu</span>
-          </div>
-          {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === '/'}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-2.5 mx-2 mb-1 rounded-lg transition-all duration-200 text-sm ${
-                  isActive
-                    ? 'nav-active font-semibold'
-                    : 'text-blue-300 hover:bg-blue-900/30 hover:text-white'
-                }`
-              }
-              onClick={() => window.innerWidth < 1024 && onClose()}
+  if (item.href) {
+    return (
+      <a href={item.href} target="_blank" rel="noopener noreferrer" className="topnav-item">
+        {item.label}
+      </a>
+    );
+  }
+
+  if (item.children) {
+    return (
+      <div
+        className="topnav-dropdown-wrapper"
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+      >
+        <button className="topnav-item topnav-has-children">
+          {item.label}
+          <ChevronDown size={10} className="ml-1 inline" />
+        </button>
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.15 }}
+              className="topnav-dropdown"
             >
-              <item.icon size={17} className="flex-shrink-0" />
-              <span className="flex-1">{item.label}</span>
-              {item.badge && (
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                  item.badge === 'NEW'
-                    ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                    : 'bg-blue-600/30 text-blue-300'
-                }`}>
-                  {item.badge}
-                </span>
-              )}
-            </NavLink>
-          ))}
-
-          {/* Official RMC Nagpur Navigation Tabs */}
-          <div className="mt-6 mb-2 border-t border-blue-900/30 pt-4">
-            <div className="px-3 mb-2">
-              <span className="text-[10px] font-semibold text-amber-500 uppercase tracking-widest">Official RMC Tabs</span>
-            </div>
-            
-            <div className="space-y-1">
-              {/* Weather Analysis */}
-              <div className="mx-2 rounded-lg bg-blue-900/20">
-                <div className="px-4 py-2 text-sm font-semibold text-blue-200 flex items-center justify-between cursor-pointer">
-                  <span>Weather Analysis</span>
-                  <ChevronRight size={14} className="text-blue-400 rotate-90" />
-                </div>
-                <div className="px-4 pb-2 pt-1 flex flex-col space-y-2">
-                  <NavLink 
-                    to="/observations" 
-                    className={({ isActive }) => `text-xs pl-4 border-l ${isActive ? 'text-white border-blue-400 font-semibold' : 'text-blue-300 hover:text-white border-blue-700/50'}`}
-                    onClick={() => window.innerWidth < 1024 && onClose()}
+              {item.children.map((child, i) =>
+                child.path ? (
+                  <NavLink
+                    key={i}
+                    to={child.path}
+                    className="topnav-dropdown-item"
+                    onClick={() => setOpen(false)}
                   >
-                    Today's Observations
+                    {child.label}
                   </NavLink>
-                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">All India Weather Bulletin</a>
-                </div>
-              </div>
+                ) : (
+                  <a
+                    key={i}
+                    href={child.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="topnav-dropdown-item"
+                    onClick={() => setOpen(false)}
+                  >
+                    {child.label}
+                  </a>
+                )
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
 
-              {/* Forecasts & Warnings */}
-              <div className="mx-2 rounded-lg bg-blue-900/20">
-                <div className="px-4 py-2 text-sm font-semibold text-blue-200 flex items-center justify-between cursor-pointer">
-                  <span>Forecasts & Warnings</span>
-                  <ChevronRight size={14} className="text-blue-400 rotate-90" />
-                </div>
-                <div className="px-4 pb-2 pt-1 flex flex-col space-y-2">
-                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">Regional Weather Forecast</a>
-                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">Precipitation Forecast</a>
-                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">Warning Forecast</a>
-                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">Districtwise Warnings</a>
-                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">Local (City) Forecast</a>
-                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">Agromet Advisories</a>
-                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">Impact Based Forecast</a>
-                </div>
-              </div>
+  return null;
+}
 
-              {/* Reports */}
-              <div className="mx-2 rounded-lg bg-blue-900/20">
-                <div className="px-4 py-2 text-sm font-semibold text-blue-200 flex items-center justify-between cursor-pointer">
-                  <span>Reports</span>
-                  <ChevronRight size={14} className="text-blue-400 rotate-90" />
-                </div>
-                <div className="px-4 pb-2 pt-1 flex flex-col space-y-2">
-                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">DRMS Rainfall Report</a>
-                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">Rainfall Activity</a>
-                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">Regional Daily Report</a>
-                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">Weekly Weather Report</a>
-                  <a href="#" className="text-xs text-blue-300 hover:text-white pl-4 border-l border-blue-700/50">Seasonal Data</a>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Links */}
-          <div className="px-3 mt-6 mb-2">
-            <span className="text-[10px] font-semibold text-blue-600 uppercase tracking-widest">Quick Links</span>
-          </div>
-          {[
-            { label: 'IMD Nagpur Website', url: 'https://www.imdnagpur.gov.in' },
-            { label: 'Observations Page', url: 'https://www.imdnagpur.gov.in/pages/observations.php' },
-            { label: 'India Met Dept', url: 'https://mausam.imd.gov.in' },
-          ].map((link) => (
-            <a
-              key={link.url}
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 px-4 py-2 mx-2 rounded-lg text-xs text-blue-400 hover:text-blue-200 hover:bg-blue-900/20 transition-all"
-            >
-              <Globe size={13} />
-              <span className="truncate">{link.label}</span>
-              <ChevronRight size={11} className="ml-auto flex-shrink-0" />
-            </a>
-          ))}
-        </nav>
-
-        {/* Bottom section */}
-        <div className="p-4 border-t border-blue-900/30">
-          <div className="glass-light rounded-lg p-3">
-            <p className="text-[10px] text-blue-400 font-medium mb-1">Data as of</p>
-            <p className="text-xs text-white font-semibold">{format(new Date(), 'dd MMM yyyy, HH:mm')} IST</p>
-            <p className="text-[10px] text-blue-400 mt-1">Source: RMC Nagpur / IMD</p>
-          </div>
+/* ═══════════════════════════════════════════════════
+   OFFICIAL HEADER BANNER
+   ═══════════════════════════════════════════════════ */
+function OfficialHeader() {
+  return (
+    <div
+      className="official-header"
+      style={{ backgroundImage: `url(${headerBg})`, backgroundSize: 'cover' }}
+    >
+      <div className="official-header-inner">
+        <img src={emblemLogo} alt="Emblem" className="header-logo header-emblem" />
+        <div className="header-text-center">
+          <div className="header-title">Regional Meteorological Centre, Nagpur</div>
+          <div className="header-subtitle">India Meteorological Department, Ministry of Earth Sciences</div>
+          <div className="header-subtitle-2">Government of India</div>
         </div>
-      </motion.aside>
-    </>
+        <img src={imd150tLogo} alt="150 Years IMD" className="header-logo header-imd150" />
+        <img src={imdLogoc} alt="IMD Logo" className="header-logo header-imdlogo" />
+      </div>
+    </div>
   );
 }
 
-function Header({ onMenuClick, darkMode, setDarkMode }) {
+/* ═══════════════════════════════════════════════════
+   TOP NAVIGATION BAR
+   ═══════════════════════════════════════════════════ */
+function TopNavBar({ onMenuClick }) {
   const [time, setTime] = useState(new Date());
-  const [tickerIdx, setTickerIdx] = useState(0);
-  const [notifications, setNotifications] = useState(3);
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    const ticker = setInterval(() => {
-      setTickerIdx(i => (i + 1) % alertTicker.length);
-    }, 8000);
-    return () => clearInterval(ticker);
-  }, []);
-
   return (
-    <div className="sticky top-0 z-30">
-      {/* ═══ OFFICIAL RMC NAGPUR BANNER (Exact Replica) ═══ */}
-      <div
-        className="w-full relative"
-        style={{
-          backgroundImage: 'url(/images/bg3.jpg)',
-          backgroundSize: 'cover',
-          borderBottom: 'none'
-        }}
-      >
-        <div className="flex items-center justify-between min-h-[70px] w-full px-2">
-          {/* LEFT: Government of India Emblem */}
-          <div className="flex-shrink-0 flex items-center justify-end" style={{ width: '100px', padding: '3px' }}>
-            <img src="/images/emblem.gif" alt="Government of India Emblem"
-              className="h-[80px] border-0" style={{ padding: '7px' }}
-              onError={e => { e.target.style.display = 'none'; }} />
-          </div>
+    <div className="topnav-bar">
+      {/* Date/Time */}
+      <div className="topnav-datetime">
+        <b>{format(time, 'EEEE, dd MMMM yyyy')}</b>
+        <br />
+        <b>{format(time, 'hh:mm:ss a')} IST</b>
+      </div>
 
-          {/* CENTER: Title */}
-          <div className="flex-1 text-center py-1 flex flex-col items-center justify-center">
-            <h1 style={{
-              fontSize: '28px', color: '#39ff14', fontWeight: '900',
-              textShadow: '1px 1px 0 #ff4500, -1px -1px 0 #ff4500, 1px -1px 0 #ff4500, -1px 1px 0 #ff4500, 2px 2px 4px rgba(0,0,0,0.5)', 
-              letterSpacing: '1px',
-              fontFamily: 'Courier New, Courier, monospace',
-              margin: '0', padding: '0', lineHeight: '1.2'
-            }}>
-              Regional Meteorological Centre, Nagpur
-            </h1>
-            <h2 style={{
-              fontSize: '14px', color: '#4169e1', fontWeight: 'bold',
-              fontFamily: 'Courier New, Courier, monospace', margin: '2px 0 0 0',
-              textShadow: '1px 1px 2px rgba(255,255,255,0.8)'
-            }}>
-              India Meteorological Department, Ministry of Earth Sciences
-            </h2>
-            <h3 style={{
-              fontSize: '12px', color: '#8b7355', fontWeight: 'bold',
-              fontFamily: 'Courier New, Courier, monospace', margin: '2px 0 0 0'
-            }}>
-              Government of India
-            </h3>
-          </div>
-
-          {/* RIGHT: 150 Years IMD + IMD Logo */}
-          <div className="flex items-center flex-shrink-0">
-             <div style={{ width: '100px', padding: '3px' }} className="flex items-center justify-center">
-                <img src="/images/imd150t.png" alt="150 Years IMD"
-                  className="h-[75px] border-0" style={{ padding: '7px' }}
-                  onError={e => { e.target.style.display = 'none'; }} />
-             </div>
-             <div style={{ width: '100px', padding: '3px' }} className="flex items-center justify-center">
-                <img src="/images/imd_logoc.gif" alt="IMD Logo"
-                  className="h-[80px] border-0" style={{ padding: '7px' }}
-                  onError={e => { e.target.style.display = 'none'; }} />
-             </div>
-          </div>
+      {/* Nav Items */}
+      <div className="topnav-items">
+        <button className="topnav-mobile-toggle" onClick={onMenuClick}>
+          <Menu size={18} />
+        </button>
+        <div className="topnav-items-inner">
+          {topNavItems.map((item, i) => (
+            <NavDropdown key={i} item={item} />
+          ))}
         </div>
       </div>
 
-      {/* ═══ DARK BLUE NAV BAR ═══ */}
-      <div style={{
-        backgroundColor: '#003366', // Matched dark blue
-        borderTop: '2px solid #333',
-        borderBottom: '2px solid #333',
-      }}>
-        <div className="flex items-center justify-between px-2">
-          {/* Left Date/Time */}
-          <div className="hidden lg:flex flex-col items-center justify-center px-4 border-r border-[#1a4a82] min-w-[150px]">
-            <span className="text-yellow-300 text-[11px] font-bold">
-              {format(time, 'EEEE, dd MMMM yyyy')}
-            </span>
-            <span className="text-yellow-300 text-[11px] font-bold mt-0.5">
-              {format(time, 'hh:mm:ss a')} IST
-            </span>
-          </div>
-
-          <button onClick={onMenuClick}
-            className="lg:hidden p-2 text-white hover:bg-[#1a4a82] transition-all">
-            <Menu size={18} />
-          </button>
-
-          {/* Navigation Links */}
-          <div className="hidden lg:flex items-center text-[10.5px] font-semibold text-white">
-            <NavLink to="/" className={({ isActive }) => `px-4 py-3 border-r border-[#1a4a82] hover:bg-[#1a4a82] ${isActive ? 'bg-[#1a4a82]' : ''}`}>H O M E</NavLink>
-            <a href="#" className="px-3 py-3 border-r border-[#1a4a82] hover:bg-[#1a4a82]">IMD Website for General Public</a>
-            <a href="#" className="px-3 py-3 border-r border-[#1a4a82] hover:bg-[#1a4a82]">About RMC Nagpur ▾</a>
-            <a href="#" className="px-3 py-3 border-r border-[#1a4a82] hover:bg-[#1a4a82]">About MoES & IMD ▾</a>
-            <a href="#" className="px-3 py-3 border-r border-[#1a4a82] hover:bg-[#1a4a82]">Publications ▾</a>
-            <a href="#" className="px-3 py-3 border-r border-[#1a4a82] hover:bg-[#1a4a82]">Miscellaneous ▾</a>
-            <a href="#" className="px-3 py-3 border-r border-[#1a4a82] hover:bg-[#1a4a82]">Do's & Dont's ▾</a>
-            <a href="#" className="px-3 py-3 border-r border-[#1a4a82] hover:bg-[#1a4a82]">FAQs ▾</a>
-            <a href="#" className="px-3 py-3 border-r border-[#1a4a82] hover:bg-[#1a4a82]">Contact Us</a>
-          </div>
-
-          <div className="flex-1"></div>
-
-          {/* Right Hindi Toggle */}
-          <div className="hidden lg:flex items-center px-4 border-l border-[#1a4a82] h-full py-3">
-            <span className="text-yellow-400 text-[12px] font-bold">हिन्दी / Hindi</span>
-          </div>
-
-        </div>
-      </div>
-
-      {/* ═══ ALERT TICKER ═══ */}
-      <div className="bg-gradient-to-r from-red-900/80 via-orange-900/60 to-red-900/80 border-b border-red-700/30 py-1 px-4">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <AlertTriangle size={12} className="text-red-400 animate-pulse" />
-            <span className="text-red-300 text-[11px] font-bold tracking-wider uppercase">Alert</span>
-          </div>
-          <div className="flex-1 overflow-hidden">
-            <AnimatePresence mode="wait">
-              <motion.p key={tickerIdx}
-                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.4 }}
-                className="text-orange-200 text-[11px] font-medium truncate">
-                {alertTicker[tickerIdx]}
-              </motion.p>
-            </AnimatePresence>
-          </div>
-          <div className="hidden md:flex items-center gap-1.5 flex-shrink-0">
-            <Wifi size={11} className="text-green-400" />
-            <span className="text-green-400 text-[10px] font-semibold">LIVE</span>
-          </div>
-        </div>
+      {/* Hindi Switch */}
+      <div className="topnav-hindi">
+        <span className="hindi-text">हिन्दी</span> / <span>Hindi</span>
       </div>
     </div>
   );
 }
 
-function PageBreadcrumb() {
-  const location = useLocation();
-  const item = navItems.find(n => {
-    if (n.path === '/') return location.pathname === '/';
-    return location.pathname.startsWith(n.path);
-  });
-  return <span className="text-white font-semibold text-sm">{item?.label || 'Dashboard'}</span>;
-}
-
+/* ═══════════════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════════════ */
 function Footer() {
   return (
-    <footer className="border-t border-blue-900/30 mt-auto">
-      <div className="bg-gradient-to-r from-[#050d1a] via-[#0c1b33] to-[#050d1a] py-6 px-6">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
-          <div>
-            <h4 className="text-amber-400 font-semibold mb-3">Regional Meteorological Centre</h4>
-            <p className="text-blue-400 leading-relaxed">
-              Regional Meteorological Centre, Nagpur<br />
-              India Meteorological Department<br />
-              Ministry of Earth Sciences<br />
-              Government of India
-            </p>
-          </div>
-          <div>
-            <h4 className="text-blue-300 font-semibold mb-3">Official Links</h4>
-            <div className="space-y-1.5">
-              {[
-                ['IMD Nagpur', 'https://www.imdnagpur.gov.in'],
-                ['Observations', 'https://www.imdnagpur.gov.in/pages/observations.php'],
-                ['India Met Dept', 'https://mausam.imd.gov.in'],
-                ['Ministry of Earth Sciences', 'https://www.moes.gov.in'],
-              ].map(([label, url]) => (
-                <a key={url} href={url} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-blue-400 hover:text-cyan-300 transition-colors">
-                  <ChevronRight size={10} />
-                  {label}
-                </a>
-              ))}
-            </div>
-          </div>
-          <div>
-            <h4 className="text-blue-300 font-semibold mb-3">Internship Project</h4>
-            <p className="text-blue-400 leading-relaxed">
-              Developed as part of Internship Project at<br />
-              <strong className="text-amber-300">Regional Meteorological Centre, Nagpur</strong><br />
-              <span className="text-cyan-400">25 May 2026 – 30 June 2026</span>
-            </p>
-            <div className="mt-3 flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-400 pulse-dot"></div>
-              <span className="text-green-400 font-medium">WeatherDesk v2.5.1 • MVP Prototype</span>
-            </div>
-          </div>
-        </div>
-        <div className="mt-4 pt-4 border-t border-blue-900/30 text-center text-[10px] text-blue-600">
-          © 2026 Regional Meteorological Centre, Nagpur | India Meteorological Department | Ministry of Earth Sciences | Government of India
-        </div>
+    <footer className="official-footer">
+      <div className="footer-inner">
+        <a href="#/disclaimer" className="footer-link">Disclaimer</a>
+        <span className="footer-sep">|</span>
+        <a href="#/info" className="footer-link">Website Details</a>
+      </div>
+      <div className="footer-copyright">
+        © {new Date().getFullYear()} Regional Meteorological Centre, Nagpur | India Meteorological Department | Ministry of Earth Sciences | Government of India
       </div>
     </footer>
   );
 }
 
+/* ═══════════════════════════════════════════════════
+   ANIMATED PAGE WRAPPER
+   ═══════════════════════════════════════════════════ */
+function AnimatedPage({ children }) {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={location.pathname}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+/* ═══════════════════════════════════════════════════
+   MAIN APP COMPONENT
+   ═══════════════════════════════════════════════════ */
+function AppContent() {
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  return (
+    <div className="app-root">
+      <Toaster position="top-right" />
+
+      {/* Official Header Banner */}
+      <OfficialHeader />
+
+      {/* Top Navigation Bar */}
+      <TopNavBar onMenuClick={() => setMobileSidebarOpen(!mobileSidebarOpen)} />
+
+      {/* Mobile sidebar overlay */}
+      <AnimatePresence>
+        {mobileSidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="mobile-overlay"
+            onClick={() => setMobileSidebarOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Three-column layout */}
+      <div className="three-col-layout">
+        {/* Left Sidebar */}
+        <div className={`left-sidebar-wrapper ${mobileSidebarOpen ? 'mobile-open' : ''}`}>
+          <button
+            className="mobile-close-btn"
+            onClick={() => setMobileSidebarOpen(false)}
+          >
+            <X size={18} />
+          </button>
+          <LeftSidebar />
+        </div>
+
+        {/* Main Content */}
+        <main className="main-content">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/observations" element={<Observations />} />
+            <Route path="/forecast/regional" element={<Forecast />} />
+            <Route path="/reports/seasonal" element={<Analytics />} />
+            <Route path="/reports/daily" element={<Reports />} />
+            <Route path="/reports/weekly" element={<Reports />} />
+            {/* All other routes use InfoPage */}
+            <Route path="/forecast/*" element={<InfoPage />} />
+            <Route path="/reports/*" element={<InfoPage />} />
+            <Route path="/dss" element={<InfoPage />} />
+            <Route path="/about/*" element={<InfoPage />} />
+            <Route path="/contact" element={<InfoPage />} />
+            <Route path="/rti" element={<InfoPage />} />
+            <Route path="/grievance" element={<InfoPage />} />
+            <Route path="/disclaimer" element={<InfoPage />} />
+            <Route path="/info" element={<InfoPage />} />
+            <Route path="*" element={<Home />} />
+          </Routes>
+        </main>
+
+        {/* Right Sidebar */}
+        <div className="right-sidebar-wrapper">
+          <RightSidebar />
+        </div>
+      </div>
+      {/* Footer */}
+      <Footer />
+
+      {/* RMC AI Assistant Chatbot */}
+      <AIAssistant />
+    </div>
+  );
+}
+
 function App() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(true);
-
-  useEffect(() => {
-    toast.success('WeatherDesk connected to RMC Nagpur data feed', {
-      duration: 4000,
-      icon: '🛰️',
-      style: { background: '#0f2847', color: '#e2e8f0', border: '1px solid #3b82c4' }
-    });
-  }, []);
-
   return (
     <Router>
       <WeatherDataProvider>
-      <div className={`h-screen overflow-hidden ${darkMode ? '' : 'light-mode'}`}
-        style={{ background: darkMode ? '#050d1a' : '#f0f4f8' }}>
-        <Toaster position="top-right" />
-        <div className="flex flex-col h-full">
-          <Header
-            onMenuClick={() => setSidebarOpen(true)}
-            darkMode={darkMode}
-            setDarkMode={setDarkMode}
-          />
-          <div className="flex flex-1 overflow-hidden">
-            {/* Sidebar */}
-            <div className="hidden lg:block flex-shrink-0 h-full">
-              <Sidebar isOpen={true} onClose={() => {}} darkMode={darkMode} />
-            </div>
-            {/* Mobile sidebar */}
-            <div className="lg:hidden">
-              <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} darkMode={darkMode} />
-            </div>
-
-            {/* Main content */}
-            <div className="flex-1 flex flex-col min-w-0 h-full">
-              <main className="flex-1 overflow-auto">
-                <AnimatePresence mode="wait">
-                  <Routes>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/observations" element={<Observations />} />
-                    <Route path="/forecast" element={<Forecast />} />
-                    <Route path="/analytics" element={<Analytics />} />
-                    <Route path="/reports" element={<Reports />} />
-                    <Route path="/chatbot" element={<Chatbot />} />
-                    <Route path="/admin" element={<Admin />} />
-                  </Routes>
-                </AnimatePresence>
-                <Footer />
-              </main>
-            </div>
-          </div>
-        </div>
-      </div>
+        <RegionProvider>
+          <AppContent />
+        </RegionProvider>
       </WeatherDataProvider>
     </Router>
   );
