@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thermodynamic Instability Dashboard</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="title">
+            <h1><i class="fa-solid fa-cloud-bolt"></i> Thermodynamic Instability</h1>
+        </div>
+        <div class="legacy-controls glass-panel" style="margin-top: 15px; padding: 15px;">
+            <div class="legacy-row" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+                <div class="legacy-group" style="display: flex; flex-direction: column; gap: 5px;">
+                    <label style="font-weight: 600; font-size: 0.9em;">Region</label>
+                    <select id="regionSelect" class="bg-dark text-white p-1 rounded" style="padding: 5px; border: 1px solid rgba(255,255,255,0.2);">
+                        <option value="naconf" selected>North America</option>
+                        <option value="samer">South America</option>
+                        <option value="pac">South Pacific</option>
+                        <option value="nz">New Zealand</option>
+                        <option value="ant">Antarctica</option>
+                        <option value="np">Arctic</option>
+                        <option value="europe">Europe</option>
+                        <option value="africa">Africa</option>
+                        <option value="seasia">Southeast Asia</option>
+                        <option value="mideast">Mideast</option>
+                    </select>
+                </div>
+                <div class="legacy-group" style="display: flex; flex-direction: column; gap: 5px;">
+                    <label style="font-weight: 600; font-size: 0.9em;">Type of plot</label>
+                    <select id="typeSelect" class="bg-dark text-white p-1 rounded" style="padding: 5px; border: 1px solid rgba(255,255,255,0.2);">
+                        <option value="TEXT:LIST" selected>Text: List</option>
+                    </select>
+                </div>
+                <div class="legacy-group" style="display: flex; flex-direction: column; gap: 5px;">
+                    <label style="font-weight: 600; font-size: 0.9em;">Year</label>
+                    <select id="yearSelect" class="bg-dark text-white p-1 rounded" style="padding: 5px; border: 1px solid rgba(255,255,255,0.2);"></select>
+                </div>
+                <div class="legacy-group" style="display: flex; flex-direction: column; gap: 5px;">
+                    <label style="font-weight: 600; font-size: 0.9em;">Month</label>
+                    <select id="monthSelect" class="bg-dark text-white p-1 rounded" style="padding: 5px; border: 1px solid rgba(255,255,255,0.2);">
+                        <option value="01">Jan</option>
+                        <option value="02">Feb</option>
+                        <option value="03">Mar</option>
+                        <option value="04">Apr</option>
+                        <option value="05">May</option>
+                        <option value="06">Jun</option>
+                        <option value="07">Jul</option>
+                        <option value="08">Aug</option>
+                        <option value="09">Sep</option>
+                        <option value="10">Oct</option>
+                        <option value="11">Nov</option>
+                        <option value="12">Dec</option>
+                    </select>
+                </div>
+                <div class="legacy-group" style="display: flex; flex-direction: column; gap: 5px;">
+                    <label style="font-weight: 600; font-size: 0.9em;">From</label>
+                    <select id="fromSelect" class="bg-dark text-white p-1 rounded" style="padding: 5px; border: 1px solid rgba(255,255,255,0.2);"></select>
+                </div>
+                <div class="legacy-group" style="display: flex; flex-direction: column; gap: 5px;">
+                    <label style="font-weight: 600; font-size: 0.9em;">To</label>
+                    <select id="toSelect" class="bg-dark text-white p-1 rounded" style="padding: 5px; border: 1px solid rgba(255,255,255,0.2);"></select>
+                </div>
+                <div class="legacy-group" style="display: flex; flex-direction: column; gap: 5px;">
+                    <label style="font-weight: 600; font-size: 0.9em;">Station (Ctrl+Click)</label>
+                    <select id="stationInput" multiple size="4" class="bg-dark text-white p-1 rounded" style="padding: 5px; border: 1px solid rgba(255,255,255,0.2); max-width: 250px; overflow-y: auto;">
+                    </select>
+                </div>
+                <div class="legacy-actions" style="display: flex; gap: 10px; margin-left: auto;">
+                    <button class="btn" id="fetchBtn"><i class="fa-solid fa-cloud-arrow-down"></i> Fetch Data</button>
+                    <button class="btn btn-secondary" id="reportBtn" disabled><i class="fa-solid fa-file-pdf"></i> Print/PDF Report</button>
+                    <button class="btn btn-success" id="exportBtn" disabled><i class="fa-solid fa-file-excel"></i> Export to Excel</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div id="mapContainer" class="glass-panel" style="margin-bottom: 20px; text-align: center; overflow-x: auto;">
+            <p style="margin-bottom: 10px; color: var(--text-secondary);">Click on the map to request a sounding at that location or enter the station number above.</p>
+            <img src="naconf.jpg" usemap="#raob" style="border-radius: 8px; max-width: none;">
+            <map name="raob">
+<AREA COORDS="568,3,5" SHAPE="CIRCLE" HREF="#" data-stnm="03953" title="03953  Valentia Observatory">
+<AREA COORDS="414,27,5" SHAPE="CIRCLE" HREF="#" data-stnm="04220" title="04220  Aasiaat (Egedesminde) (BGEM)">
+<AREA COORDS="457,53,5" SHAPE="CIRCLE" HREF="#" data-stnm="04270" title="04270  Narsarsuaq (BGBW)">
+<AREA COORDS="456,19,5" SHAPE="CIRCLE" HREF="#" data-stnm="04360" title="04360  Tasiilaq (Ammassalik) (BGAM)">
+<AREA COORDS="57,10,5" SHAPE="CIRCLE" HREF="#" data-stnm="32618" title="32618  Nikolskoe, HA">
+<AREA COORDS="195,14,5" SHAPE="CIRCLE" HREF="#" data-stnm="70026" title="70026  Barrow/W. Post W.Rogers, AK (PABR)">
+<AREA COORDS="169,59,5" SHAPE="CIRCLE" HREF="#" data-stnm="70231" title="70231  Mcgrath, AK (PAMC)">
+<AREA COORDS="192,60,5" SHAPE="CIRCLE" HREF="#" data-stnm="70261" title="70261  Fairbanks/Int, AK (PAFA)">
+<AREA COORDS="177,77,5" SHAPE="CIRCLE" HREF="#" data-stnm="70273" title="70273  Anchorage/Int, AK (PANC)">
+<AREA COORDS="125,84,5" SHAPE="CIRCLE" HREF="#" data-stnm="70316" title="70316  Cold Bay, AK (PACD)">
+<AREA COORDS="200,98,5" SHAPE="CIRCLE" HREF="#" data-stnm="70361" title="70361  Yakutat, AK (PAYA)">
+<AREA COORDS="214,131,5" SHAPE="CIRCLE" HREF="#" data-stnm="70398" title="70398  Annette Island, AK (PANT)">
+<AREA COORDS="244,77,5" SHAPE="CIRCLE" HREF="#" data-stnm="71043" title="71043  Norman Wells Ua, NT (YVQ)">
+<AREA COORDS="354,54,5" SHAPE="CIRCLE" HREF="#" data-stnm="71081" title="71081  Hall Beach, NT (YUX)">
+<AREA COORDS="222,158,5" SHAPE="CIRCLE" HREF="#" data-stnm="71109" title="71109  Port Hardy, BC (YZT)">
+<AREA COORDS="269,151,5" SHAPE="CIRCLE" HREF="#" data-stnm="71119" title="71119  Edmonton Stony Plain, AB (WSE)">
+<AREA COORDS="449,173,5" SHAPE="CIRCLE" HREF="#" data-stnm="71603" title="71603  Yarmouth, NS (YQI)">
+<AREA COORDS="408,175,5" SHAPE="CIRCLE" HREF="#" data-stnm="71722" title="71722  Maniwaki, QB (WMW)">
+<AREA COORDS="483,130,5" SHAPE="CIRCLE" HREF="#" data-stnm="71802" title="71802  Mt Pearl, NF (AYT)">
+<AREA COORDS="433,141,5" SHAPE="CIRCLE" HREF="#" data-stnm="71811" title="71811  Sept-Iles, QB (YZV)">
+<AREA COORDS="462,137,5" SHAPE="CIRCLE" HREF="#" data-stnm="71815" title="71815  Stephenville, NF (YJT)">
+<AREA COORDS="444,117,5" SHAPE="CIRCLE" HREF="#" data-stnm="71816" title="71816  Goose Bay, NF (YYR)">
+<AREA COORDS="313,150,5" SHAPE="CIRCLE" HREF="#" data-stnm="71867" title="71867  The Pas, MB (YQD)">
+<AREA COORDS="408,104,5" SHAPE="CIRCLE" HREF="#" data-stnm="71906" title="71906  Kuujjuaq, QB (YVP)">
+<AREA COORDS="380,112,5" SHAPE="CIRCLE" HREF="#" data-stnm="71907" title="71907  Inukjuak, QB (WPH)">
+<AREA COORDS="241,144,5" SHAPE="CIRCLE" HREF="#" data-stnm="71908" title="71908  Prince George, BC (ZXS)">
+<AREA COORDS="395,73,5" SHAPE="CIRCLE" HREF="#" data-stnm="71909" title="71909  Iqaluit, NT (YFB)">
+<AREA COORDS="333,121,5" SHAPE="CIRCLE" HREF="#" data-stnm="71913" title="71913  Churchill, MB (YYQ)">
+<AREA COORDS="318,21,5" SHAPE="CIRCLE" HREF="#" data-stnm="71924" title="71924  Resolute, NT (YRB)">
+<AREA COORDS="300,59,5" SHAPE="CIRCLE" HREF="#" data-stnm="71925" title="71925  Cambridge Bay, NT (YCB)">
+<AREA COORDS="323,88,5" SHAPE="CIRCLE" HREF="#" data-stnm="71926" title="71926  Baker Lake, NT (YBK)">
+<AREA COORDS="279,114,5" SHAPE="CIRCLE" HREF="#" data-stnm="71934" title="71934  Fort Smith, NT (YSM)">
+<AREA COORDS="247,117,5" SHAPE="CIRCLE" HREF="#" data-stnm="71945" title="71945  Fort Nelson, BC (YYE)">
+<AREA COORDS="234,54,5" SHAPE="CIRCLE" HREF="#" data-stnm="71957" title="71957  Inuvik, NT (YEV)">
+<AREA COORDS="215,96,5" SHAPE="CIRCLE" HREF="#" data-stnm="71964" title="71964  Whitehorse, YT (YXY)">
+<AREA COORDS="418,297,5" SHAPE="CIRCLE" HREF="#" data-stnm="72201" title="72201  Key West/Int, FL (EYW)">
+<AREA COORDS="423,289,5" SHAPE="CIRCLE" HREF="#" data-stnm="72202" title="72202  Miami, FL (MFL)">
+<AREA COORDS="414,250,5" SHAPE="CIRCLE" HREF="#" data-stnm="72208" title="72208  Charleston/Muni, SC (CHS)">
+<AREA COORDS="411,281,5" SHAPE="CIRCLE" HREF="#" data-stnm="72210" title="72210  Tampa Bay Area, FL (TBW)">
+<AREA COORDS="393,253,5" SHAPE="CIRCLE" HREF="#" data-stnm="72215" title="72215  Peachtree City, GA (FFC)">
+<AREA COORDS="383,256,5" SHAPE="CIRCLE" HREF="#" data-stnm="72230" title="72230  Shelby County Airport, AL (BMX)">
+<AREA COORDS="372,274,5" SHAPE="CIRCLE" HREF="#" data-stnm="72233" title="72233  Slidell Muni, LA (LIX)">
+<AREA COORDS="369,263,5" SHAPE="CIRCLE" HREF="#" data-stnm="72235" title="72235  Jackson Thompson Fld, MS (JAN)">
+<AREA COORDS="356,278,5" SHAPE="CIRCLE" HREF="#" data-stnm="72240" title="72240  Lake Charles/Muni, LA (LCH)">
+<AREA COORDS="352,265,5" SHAPE="CIRCLE" HREF="#" data-stnm="72248" title="72248  Shreveport Reg, LA (SHV)">
+<AREA COORDS="335,265,5" SHAPE="CIRCLE" HREF="#" data-stnm="72249" title="72249  Ft Worth, TX (FWD)">
+<AREA COORDS="338,303,5" SHAPE="CIRCLE" HREF="#" data-stnm="72250" title="72250  Brownsville Intl, TX (BRO)">
+<AREA COORDS="337,293,5" SHAPE="CIRCLE" HREF="#" data-stnm="72251" title="72251  Corpus Christi Intl, TX (CRP)">
+<AREA COORDS="320,285,5" SHAPE="CIRCLE" HREF="#" data-stnm="72261" title="72261  Del Rio/Int, TX (DRT)">
+<AREA COORDS="313,271,5" SHAPE="CIRCLE" HREF="#" data-stnm="72265" title="72265  Midland/Midland Reg, TX (MAF)">
+<AREA COORDS="244,263,5" SHAPE="CIRCLE" HREF="#" data-stnm="72293" title="72293  San Diego/Miramar, CA (NKX)">
+<AREA COORDS="425,236,5" SHAPE="CIRCLE" HREF="#" data-stnm="72305" title="72305  Newport, NC (MHX)">
+<AREA COORDS="409,233,5" SHAPE="CIRCLE" HREF="#" data-stnm="72317" title="72317  Greensboro/High Pt, NC (GSO)">
+<AREA COORDS="406,228,5" SHAPE="CIRCLE" HREF="#" data-stnm="72318" title="72318  Blacksburg, VA (RNK)">
+<AREA COORDS="381,239,5" SHAPE="CIRCLE" HREF="#" data-stnm="72327" title="72327  Nashville/Old Hickory, TN (BNA)">
+<AREA COORDS="334,252,5" SHAPE="CIRCLE" HREF="#" data-stnm="72357" title="72357  Norman/Westheimer, OK (OUN)">
+<AREA COORDS="315,253,5" SHAPE="CIRCLE" HREF="#" data-stnm="72363" title="72363  Amarillo Arpt(Awos), TX (AMA)">
+<AREA COORDS="292,272,5" SHAPE="CIRCLE" HREF="#" data-stnm="72364" title="72364  Santa Teresa, NM (EPZ)">
+<AREA COORDS="292,254,5" SHAPE="CIRCLE" HREF="#" data-stnm="72365" title="72365  Albuquerque/Int, NM (ABQ)">
+<AREA COORDS="269,252,5" SHAPE="CIRCLE" HREF="#" data-stnm="72376" title="72376  Flagstaff, AZ (FGZ)">
+<AREA COORDS="230,250,5" SHAPE="CIRCLE" HREF="#" data-stnm="72393" title="72393  Vandenberg Afb, Vandenberg Afb, CA (VBG)">
+<AREA COORDS="415,215,5" SHAPE="CIRCLE" HREF="#" data-stnm="72403" title="72403  Sterling, VA (IAD)">
+<AREA COORDS="388,220,5" SHAPE="CIRCLE" HREF="#" data-stnm="72426" title="72426  Wilmington, OH (ILN)">
+<AREA COORDS="350,239,5" SHAPE="CIRCLE" HREF="#" data-stnm="72440" title="72440  Springfield/Muno., MO (SGF)">
+<AREA COORDS="321,239,5" SHAPE="CIRCLE" HREF="#" data-stnm="72451" title="72451  Dodge City(Awos), KS (DDC)">
+<AREA COORDS="339,230,5" SHAPE="CIRCLE" HREF="#" data-stnm="72456" title="72456  Topeka/Billard Muni, KS (TOP)">
+<AREA COORDS="285,232,5" SHAPE="CIRCLE" HREF="#" data-stnm="72476" title="72476  Grand Junction/Walker, CO (GJT)">
+<AREA COORDS="238,224,5" SHAPE="CIRCLE" HREF="#" data-stnm="72489" title="72489  Reno, NV (REV)">
+<AREA COORDS="226,232,5" SHAPE="CIRCLE" HREF="#" data-stnm="72493" title="72493  Oakland Int, CA (OAK)">
+<AREA COORDS="430,199,5" SHAPE="CIRCLE" HREF="#" data-stnm="72501" title="72501  Upton, NY (OKX)">
+<AREA COORDS="423,191,5" SHAPE="CIRCLE" HREF="#" data-stnm="72518" title="72518  Albany, NY (ALB)">
+<AREA COORDS="401,210,5" SHAPE="CIRCLE" HREF="#" data-stnm="72520" title="72520  Pittsburgh/Moon, PA (PIT)">
+<AREA COORDS="404,196,5" SHAPE="CIRCLE" HREF="#" data-stnm="72528" title="72528  Buffalo Int, NY (BUF)">
+<AREA COORDS="335,218,5" SHAPE="CIRCLE" HREF="#" data-stnm="72558" title="72558  Omaha/Valley, NE (OAX)">
+<AREA COORDS="318,221,5" SHAPE="CIRCLE" HREF="#" data-stnm="72562" title="72562  North Platte/Lee Bird, NE (LBF)">
+<AREA COORDS="271,222,5" SHAPE="CIRCLE" HREF="#" data-stnm="72572" title="72572  Salt Lake City/Intnl, UT (SLC)">
+<AREA COORDS="255,220,5" SHAPE="CIRCLE" HREF="#" data-stnm="72582" title="72582  Elko, NV (LKN)">
+<AREA COORDS="228,207,5" SHAPE="CIRCLE" HREF="#" data-stnm="72597" title="72597  Medford/Jackson, OR (MFR)">
+<AREA COORDS="386,202,5" SHAPE="CIRCLE" HREF="#" data-stnm="72632" title="72632  White Lake, MI (DTX)">
+<AREA COORDS="378,191,5" SHAPE="CIRCLE" HREF="#" data-stnm="72634" title="72634  Gaylord, MI (APX)">
+<AREA COORDS="344,198,5" SHAPE="CIRCLE" HREF="#" data-stnm="72649" title="72649  Chanhassen, MN (MPX)">
+<AREA COORDS="325,196,5" SHAPE="CIRCLE" HREF="#" data-stnm="72659" title="72659  Aberdeen/Reg, SD (ABR)">
+<AREA COORDS="307,205,5" SHAPE="CIRCLE" HREF="#" data-stnm="72662" title="72662  Rapid City, SD (UNR)">
+<AREA COORDS="286,210,5" SHAPE="CIRCLE" HREF="#" data-stnm="72672" title="72672  Riverton, WY (RIW)">
+<AREA COORDS="255,205,5" SHAPE="CIRCLE" HREF="#" data-stnm="72681" title="72681  Boise/Mun, ID (BOI)">
+<AREA COORDS="230,193,5" SHAPE="CIRCLE" HREF="#" data-stnm="72694" title="72694  Salem/Mcnary, OR (SLE)">
+<AREA COORDS="435,161,5" SHAPE="CIRCLE" HREF="#" data-stnm="72712" title="72712  Caribou/Mun, ME (CAR)">
+<AREA COORDS="342,177,5" SHAPE="CIRCLE" HREF="#" data-stnm="72747" title="72747  Int.Falls/Falls Int, MN (INL)">
+<AREA COORDS="316,190,5" SHAPE="CIRCLE" HREF="#" data-stnm="72764" title="72764  Bismarck/Mun, ND (BIS)">
+<AREA COORDS="294,182,5" SHAPE="CIRCLE" HREF="#" data-stnm="72768" title="72768  Glasgow/Int, MT (GGW)">
+<AREA COORDS="379,250,5" SHAPE="CIRCLE" HREF="#" data-stnm="72800" title="72800  Arm Amf3, AL (BNF)">
+<AREA COORDS="249,166,5" SHAPE="CIRCLE" HREF="#" data-stnm="73033" title="73033  Vernon, BC (CWVK)">
+<AREA COORDS="434,179,5" SHAPE="CIRCLE" HREF="#" data-stnm="74389" title="74389  Gray, ME (GYX)">
+<AREA COORDS="358,214,5" SHAPE="CIRCLE" HREF="#" data-stnm="74455" title="74455  Davenport, IA (DVN)">
+<AREA COORDS="365,221,5" SHAPE="CIRCLE" HREF="#" data-stnm="74560" title="74560  Lincoln, IL (ILX)">
+<AREA COORDS="333,244,5" SHAPE="CIRCLE" HREF="#" data-stnm="74646" title="74646  Lamont Oklahoma, OK (LMN)">
+<AREA COORDS="295,290,5" SHAPE="CIRCLE" HREF="#" data-stnm="76225" title="76225  Chihuahua, Chih.">
+<AREA COORDS="271,293,5" SHAPE="CIRCLE" HREF="#" data-stnm="76256" title="76256  Empalme, Son.">
+<AREA COORDS="324,305,5" SHAPE="CIRCLE" HREF="#" data-stnm="76394" title="76394  Monterrey Intl (MMAN)">
+<AREA COORDS="272,314,5" SHAPE="CIRCLE" HREF="#" data-stnm="76405" title="76405  La Paz, B.C.S.">
+<AREA COORDS="292,320,5" SHAPE="CIRCLE" HREF="#" data-stnm="76458" title="76458  Colonia Juancarrasco">
+<AREA COORDS="313,323,5" SHAPE="CIRCLE" HREF="#" data-stnm="76526" title="76526  Guadalupe">
+<AREA COORDS="397,323,5" SHAPE="CIRCLE" HREF="#" data-stnm="76595" title="76595  Cancun">
+<AREA COORDS="308,335,5" SHAPE="CIRCLE" HREF="#" data-stnm="76612" title="76612  Guadalajara, Jal.">
+<AREA COORDS="382,326,5" SHAPE="CIRCLE" HREF="#" data-stnm="76644" title="76644  Aerop.Internacional Yuc (MMMD)">
+<AREA COORDS="303,344,5" SHAPE="CIRCLE" HREF="#" data-stnm="76654" title="76654  Manzanillo, Col.">
+<AREA COORDS="332,341,5" SHAPE="CIRCLE" HREF="#" data-stnm="76679" title="76679  Aerop. Intl Mexico, D.F.">
+<AREA COORDS="349,341,5" SHAPE="CIRCLE" HREF="#" data-stnm="76692" title="76692  Hacienda Ylang Ylang Ver">
+<AREA COORDS="329,357,5" SHAPE="CIRCLE" HREF="#" data-stnm="76805" title="76805  Acapulco, Gro.">
+<AREA COORDS="455,326,5" SHAPE="CIRCLE" HREF="#" data-stnm="78397" title="78397  Kingston/Norman Manley (MKJP)">
+<AREA COORDS="490,310,5" SHAPE="CIRCLE" HREF="#" data-stnm="78486" title="78486  Santo Domingo (MDSD)">
+<AREA COORDS="509,301,5" SHAPE="CIRCLE" HREF="#" data-stnm="78526" title="78526  San Juan/Int (TJSJ)">
+<AREA COORDS="393,345,5" SHAPE="CIRCLE" HREF="#" data-stnm="78583" title="78583  Phillip Goldston Intl. (MZBZ)">
+<AREA COORDS="525,296,5" SHAPE="CIRCLE" HREF="#" data-stnm="78866" title="78866  Juliana Airport (TNCM)">
+<AREA COORDS="557,312,5" SHAPE="CIRCLE" HREF="#" data-stnm="78954" title="78954  Grantley Adams (TBPB)">
+<AREA COORDS="509,342,5" SHAPE="CIRCLE" HREF="#" data-stnm="78988" title="78988  Hato Airport, Curacao (TNCC)">
+<AREA COORDS="437,365,5" SHAPE="CIRCLE" HREF="#" data-stnm="80001" title="80001  San Andres Isl (SKSP)">
+<AREA COORDS="28,241,5" SHAPE="CIRCLE" HREF="#" data-stnm="91165" title="91165  Lihue, HI (PHLI)">
+<AREA COORDS="40,265,5" SHAPE="CIRCLE" HREF="#" data-stnm="91285" title="91285  Hilo/Gen, HI (PHTO)">
+            </map>
+        </div>
+        <section id="statusSection" class="cards-container">
+            <!-- Status Cards generated via JS -->
+        </section>
+
+        <section class="glass-panel" style="flex: 1; display: flex; flex-direction: column;">
+            <div class="tabs">
+                <button class="tab-btn active" data-target="tableView"><i class="fa-solid fa-table"></i> Table View</button>
+                <button class="tab-btn" data-target="chartView"><i class="fa-solid fa-chart-line"></i> Chart View</button>
+                <button class="tab-btn" data-target="diagramView"><i class="fa-solid fa-chart-area"></i> Sounding Diagram</button>
+                <button class="tab-btn" data-target="tephigrams"><i class="fa-solid fa-image"></i> Tephigrams</button>
+                <button class="tab-btn" data-target="rawData"><i class="fa-solid fa-code"></i> Raw Data</button>
+            </div>
+
+            <div id="tableView" class="tab-content active" style="flex: 1;">
+                <div class="table-container" style="max-height: 60vh;">
+                    <table id="dataTable">
+                        <thead>
+                            <tr id="tableHeader">
+                                <th>Index / Station</th>
+                                <!-- Headers generated via JS -->
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- Rows generated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="chartView" class="tab-content">
+                <div class="charts-grid">
+                    <div class="glass-panel">
+                        <div class="chart-header">
+                            <h3>Station Comparison (Bar Chart)</h3>
+                            <select id="compareIndexSelect" class="bg-dark text-white p-1 rounded">
+                                <!-- Options generated via JS -->
+                            </select>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="comparisonChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel">
+                        <div class="chart-header">
+                            <h3>Time Series (Line Chart)</h3>
+                            <select id="timeSeriesIndexSelect" class="bg-dark text-white p-1 rounded">
+                                <!-- Options generated via JS -->
+                            </select>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="timeSeriesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <section id="diagramView" class="tab-content">
+                <div class="diagram-controls">
+                    <div class="diagram-control-group">
+                        <label for="diagramSoundingSelect">Select Sounding</label>
+                        <select id="diagramSoundingSelect">
+                            <option>No soundings loaded</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="diagram-layout">
+                    <div class="diagram-main" id="skewTContainer">
+                        <p style="color: var(--text-secondary); padding: 40px; text-align: center;">Fetch data first, then switch to this tab to view the Skew-T diagram.</p>
+                    </div>
+                    <div class="diagram-side" id="hodographContainer">
+                        <!-- Hodograph SVG rendered here -->
+                    </div>
+                </div>
+            </section>
+
+            <section id="tephigrams" class="tab-content">
+                <div id="tephigramGrid" class="tephigram-grid">
+                    <!-- Tephigram cards populated here -->
+                </div>
+            </section>
+
+            <section id="rawData" class="tab-content">
+                <div id="rawDataContainer" class="glass-panel" style="padding: 15px; font-family: monospace; white-space: pre-wrap; overflow-x: auto; font-size: 0.9em; max-height: 600px; overflow-y: auto;">
+                    <p style="color: var(--text-secondary);">Complete sounding information will appear here.</p>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <!-- Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="stations.js"></script>
+    <script src="parser.js"></script>
+    <script src="charts.js"></script>
+    <script src="skewt.js"></script>
+    <script src="exporter.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
