@@ -146,7 +146,9 @@ const SKEWT = (() => {
             preserveAspectRatio: 'xMidYMid meet'
         });
         svg.style.width = '100%';
-        svg.style.height = '100%';
+        svg.style.height = 'auto';
+        svg.style.maxWidth = `${WIDTH}px`;
+        svg.style.display = 'block';
 
         // ── Defs: clip path for the plot area ────────────────────
         const defs = svgEl('defs');
@@ -520,7 +522,9 @@ const SKEWT = (() => {
             preserveAspectRatio: 'xMidYMid meet'
         });
         svg.style.width = '100%';
-        svg.style.height = '100%';
+        svg.style.height = 'auto';
+        svg.style.maxWidth = `${SIZE}px`;
+        svg.style.display = 'block';
 
         // Background
         svg.appendChild(svgEl('rect', {
@@ -662,36 +666,53 @@ const SKEWT = (() => {
 
         if (!select || !skewTContainer || !hodoContainer) return;
 
-        // Populate selector
+        if (select._skewtDrawHandler) {
+            select.removeEventListener('change', select._skewtDrawHandler);
+            select._skewtDrawHandler = null;
+        }
+
         select.innerHTML = '';
         if (!appData || appData.length === 0) {
-            const opt = document.createElement('option');
-            opt.textContent = 'No soundings loaded';
-            select.appendChild(opt);
-            skewTContainer.innerHTML = '<p style="color: var(--text-secondary); padding: 20px;">Fetch data first, then select a sounding.</p>';
+            select.appendChild(new Option('No soundings loaded', ''));
+            skewTContainer.innerHTML = '<p class="empty-state">Fetch data first, then open this tab to view the Skew-T diagram.</p>';
             hodoContainer.innerHTML = '';
             return;
         }
 
-        appData.forEach((s, idx) => {
+        const withProfile = appData
+            .map((s, idx) => ({ s, idx }))
+            .filter(({ s }) => (s.levelData || []).length > 0 && !s.fetchError);
+
+        if (withProfile.length === 0) {
+            select.appendChild(new Option('No profile data in current fetch', ''));
+            skewTContainer.innerHTML = '<p class="empty-state">No profile levels were parsed. Check that the backend is running on port 5000, Region matches the station, and the fetch status cards show Success.</p>';
+            hodoContainer.innerHTML = '';
+            return;
+        }
+
+        withProfile.forEach(({ s, idx }) => {
             const opt = document.createElement('option');
-            opt.value = idx;
-            const levelCount = (s.levelData || []).length;
-            opt.textContent = `${s.stationName} — ${s.date} ${s.time}Z (${levelCount} levels)`;
+            opt.value = String(idx);
+            const levelCount = s.levelData.length;
+            const tempCount = s.levelData.filter(l => l.temperature !== null).length;
+            opt.textContent = `${s.stationName} — ${s.date} ${s.time}Z (${levelCount} levels, ${tempCount} T)`;
             select.appendChild(opt);
         });
 
         function draw() {
             const idx = parseInt(select.value, 10);
             if (isNaN(idx) || !appData[idx]) return;
-            renderSkewT(skewTContainer, appData[idx]);
-            renderHodograph(hodoContainer, appData[idx]);
+            try {
+                renderSkewT(skewTContainer, appData[idx]);
+                renderHodograph(hodoContainer, appData[idx]);
+            } catch (err) {
+                console.error('Skew-T render error:', err);
+                skewTContainer.innerHTML = `<p class="status-error">Diagram render failed: ${err.message}</p>`;
+            }
         }
 
-        select.removeEventListener('change', draw); // prevent double-binding
+        select._skewtDrawHandler = draw;
         select.addEventListener('change', draw);
-
-        // Draw the first sounding immediately
         draw();
     }
 

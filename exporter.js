@@ -1,8 +1,5 @@
 function getSeverityColorHex(severity) {
-    if (severity === 'stable') return '90EE90'; // Light Green
-    if (severity === 'moderate') return 'FFD580'; // Light Orange
-    if (severity === 'unstable') return 'FF9999'; // Light Red
-    return null;
+    return getSeverityExcelColor(severity);
 }
 
 function exportToExcel(appData, startDateStr, endDateStr) {

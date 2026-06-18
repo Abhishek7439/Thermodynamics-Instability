@@ -15,9 +15,12 @@ let targetStations = [...defaultStations];
 
 // Function to add custom station
 function addCustomStation(number, name = `Station ${number}`) {
-    if (!targetStations.find(s => s.number === number)) {
+    const existing = targetStations.find(s => s.number === number);
+    if (!existing) {
         targetStations.push({ name, number, icao: "N/A" });
         return true;
     }
     return false;
 }
+
+Object.assign(window, { addCustomStation, targetStations });

@@ -27,7 +27,7 @@ const INDICES_CONFIG = [
 ];
 
 function getSeverityClass(key, value) {
-    if (value === null || value === undefined || isNaN(value)) return 'nodata';
+    if (value === null || value === undefined || value === 'M' || isNaN(value)) return 'nodata';
     const config = INDICES_CONFIG.find(c => c.key === key);
     if (config && config.evaluate) {
         return config.evaluate(value);
@@ -35,24 +35,44 @@ function getSeverityClass(key, value) {
     return ''; // default if no eval rules
 }
 
-function parseIndices(htmlText) {
-  const preMatch = htmlText.match(/<pre>([\s\S]*?)<\/pre>/gi);
-  let indicesText = '';
-  for (const block of preMatch || []) {
-    if (block.includes('Station identifier')) {
-      indicesText = block;
-      break;
+/** Preserve exact <pre> inner text from raw Wyoming HTML (no DOM parsing) */
+function extractRawPreBlocks(htmlText) {
+    if (!htmlText) return [];
+    const blocks = [];
+    const re = /<pre>([\s\S]*?)<\/pre>/gi;
+    let m;
+    while ((m = re.exec(htmlText)) !== null) {
+        blocks.push(m[1]);
     }
-  }
+    return blocks;
+}
+
+function getIndicesPreText(htmlText) {
+    const blocks = extractRawPreBlocks(htmlText);
+    for (const block of blocks) {
+        if (block.includes('Station identifier')) return block;
+    }
+    return '';
+}
+
+function parseLevelNumeric(str) {
+    if (!str || str.toUpperCase() === 'M') return null;
+    const n = parseFloat(str);
+    return isNaN(n) ? null : n;
+}
+
+function parseIndices(htmlText) {
+  const indicesText = getIndicesPreText(htmlText);
 
   if (!indicesText) return null; // Parse failed or no data
 
   const get = (label) => {
-    // Escape brackets for regex
     const escapedLabel = label.replace(/\[/g, '\\[').replace(/\]/g, '\\]');
-    const regex = new RegExp(escapedLabel + ':\\s*([\\-\\d\\.]+)', 'i');
+    const regex = new RegExp(escapedLabel + ':\\s*(M|\\-?\\d+(?:\\.\\d+)?)', 'i');
     const m = indicesText.match(regex);
-    return m ? parseFloat(m[1]) : null;
+    if (!m) return null;
+    if (m[1].toUpperCase() === 'M') return null;
+    return parseFloat(m[1]);
   };
 
   const data = {
@@ -141,21 +161,24 @@ function parseLevels(htmlText) {
 
         levels.push({
             pressure:      pressure,
-            height:        hStr  ? parseFloat(hStr)    : null,
-            temperature:   tStr  ? parseFloat(tStr)    : null,
-            dewpoint:      tdStr ? parseFloat(tdStr)   : null,
-            windDirection: drctStr ? parseFloat(drctStr) : null,
-            windSpeed:     skntStr ? parseFloat(skntStr) : null
+            height:        parseLevelNumeric(hStr),
+            temperature:   parseLevelNumeric(tStr),
+            dewpoint:      parseLevelNumeric(tdStr),
+            windDirection: parseLevelNumeric(drctStr),
+            windSpeed:     parseLevelNumeric(skntStr)
         });
-
-        // Replace any NaN that slipped through parseFloat on garbage strings
-        const lvl = levels[levels.length - 1];
-        for (const k of ['height', 'temperature', 'dewpoint', 'windDirection', 'windSpeed']) {
-            if (lvl[k] !== null && isNaN(lvl[k])) lvl[k] = null;
-        }
     }
 
     // Sort by descending pressure (surface / highest pressure first)
     levels.sort((a, b) => b.pressure - a.pressure);
     return levels;
 }
+
+Object.assign(window, {
+    INDICES_CONFIG,
+    getSeverityClass,
+    parseIndices,
+    parseLevels,
+    extractRawPreBlocks,
+    getIndicesPreText
+});

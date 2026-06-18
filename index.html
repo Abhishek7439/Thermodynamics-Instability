@@ -15,11 +15,28 @@
 </head>
 <body>
     <header>
-        <div class="title">
-            <h1><i class="fa-solid fa-cloud-bolt"></i> Thermodynamic Instability</h1>
+        <div class="header-top">
+            <div class="title">
+                <h1><i class="fa-solid fa-cloud-bolt"></i> Thermodynamic Instability</h1>
+                <p class="subtitle">Operational sounding comparison · Wyoming upper-air archive</p>
+            </div>
+            <div class="tools-zone glass-panel">
+                <span class="zone-label">Export &amp; Reports</span>
+                <div class="tools-row">
+                    <button class="btn btn-success" id="exportBtn" disabled><i class="fa-solid fa-file-excel"></i> Excel</button>
+                    <button class="btn btn-secondary" id="reportWordBtn" disabled><i class="fa-solid fa-file-word"></i> Word</button>
+                    <button class="btn btn-secondary" id="reportPdfBtn" disabled><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                    <button class="btn btn-secondary" id="clearCacheBtn" title="Clear localStorage cache"><i class="fa-solid fa-trash-can"></i> Clear Cache</button>
+                </div>
+            </div>
         </div>
-        <div class="legacy-controls glass-panel" style="margin-top: 15px; padding: 15px;">
-            <div class="legacy-row" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+
+        <div id="provenanceBanner" class="provenance-banner" hidden></div>
+        <div id="cacheWarning" class="cache-warning" hidden></div>
+
+        <div class="controls-zone glass-panel">
+            <span class="zone-label">Fetch Controls</span>
+            <div class="legacy-row controls-grid">
                 <div class="legacy-group" style="display: flex; flex-direction: column; gap: 5px;">
                     <label style="font-weight: 600; font-size: 0.9em;">Region</label>
                     <select id="regionSelect" class="bg-dark text-white p-1 rounded" style="padding: 5px; border: 1px solid rgba(255,255,255,0.2);">
@@ -70,15 +87,20 @@
                     <label style="font-weight: 600; font-size: 0.9em;">To</label>
                     <select id="toSelect" class="bg-dark text-white p-1 rounded" style="padding: 5px; border: 1px solid rgba(255,255,255,0.2);"></select>
                 </div>
-                <div class="legacy-group" style="display: flex; flex-direction: column; gap: 5px;">
-                    <label style="font-weight: 600; font-size: 0.9em;">Station (Ctrl+Click)</label>
+                <div class="legacy-group station-select-group">
+                    <label style="font-weight: 600; font-size: 0.9em;">Station (Ctrl+Click multi)</label>
                     <select id="stationInput" multiple size="4" class="bg-dark text-white p-1 rounded" style="padding: 5px; border: 1px solid rgba(255,255,255,0.2); max-width: 250px; overflow-y: auto;">
                     </select>
                 </div>
-                <div class="legacy-actions" style="display: flex; gap: 10px; margin-left: auto;">
+                <div class="legacy-group station-manual-group">
+                    <label for="customStationInput" style="font-weight: 600; font-size: 0.9em;">Or enter WMO #</label>
+                    <div class="custom-station-add">
+                        <input type="text" id="customStationInput" placeholder="e.g. 42867" maxlength="5" inputmode="numeric" autocomplete="off" aria-label="WMO station number">
+                        <button type="button" id="addStationBtn" class="btn btn-secondary btn-xs" title="Add station to list"><i class="fa-solid fa-plus"></i> Add</button>
+                    </div>
+                </div>
+                <div class="legacy-actions fetch-actions">
                     <button class="btn" id="fetchBtn"><i class="fa-solid fa-cloud-arrow-down"></i> Fetch Data</button>
-                    <button class="btn btn-secondary" id="reportBtn" disabled><i class="fa-solid fa-file-pdf"></i> Print/PDF Report</button>
-                    <button class="btn btn-success" id="exportBtn" disabled><i class="fa-solid fa-file-excel"></i> Export to Excel</button>
                 </div>
             </div>
         </div>
@@ -237,10 +259,22 @@
                         </tbody>
                     </table>
                 </div>
+                <div id="severityLegend" class="severity-legend" aria-label="Color coding legend"></div>
             </div>
 
             <div id="chartView" class="tab-content">
                 <div class="charts-grid">
+                    <div class="glass-panel ranking-panel" id="rankingPanel">
+                        <div class="chart-header">
+                            <h3><i class="fa-solid fa-ranking-star"></i> Station Ranking</h3>
+                            <select id="rankingIndexSelect" class="bg-dark text-white p-1 rounded"></select>
+                        </div>
+                        <ol id="rankingList" class="ranking-list">
+                            <li class="ranking-empty">Fetch data to rank stations by instability.</li>
+                        </ol>
+                        <p class="ranking-legend-note">Row background follows the same Stable / Moderate / Unstable colors as the table. See color key below the table.</p>
+                    </div>
+
                     <div class="glass-panel">
                         <div class="chart-header">
                             <h3>Station Comparison (Bar Chart)</h3>
@@ -293,9 +327,8 @@
             </section>
 
             <section id="rawData" class="tab-content">
-                <div id="rawDataContainer" class="glass-panel" style="padding: 15px; font-family: monospace; white-space: pre-wrap; overflow-x: auto; font-size: 0.9em; max-height: 600px; overflow-y: auto;">
-                    <p style="color: var(--text-secondary);">Complete sounding information will appear here.</p>
-                </div>
+                <p class="raw-intro">Exact Wyoming <code>&lt;pre&gt;</code> content — character-preserving, read-only. Cross-check any parsed index against this source.</p>
+                <div id="rawDataContainer" class="raw-data-viewer"></div>
             </section>
         </section>
     </main>
@@ -303,13 +336,23 @@
     <!-- Dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- Application Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+
+    <!-- Application Scripts (order matters) -->
+    <script src="constants.js"></script>
+    <script src="validation.js"></script>
+    <script src="cache.js"></script>
+    <script src="thresholds.js"></script>
+    <script src="dataModel.js"></script>
     <script src="stations.js"></script>
     <script src="parser.js"></script>
+    <script src="ranking.js"></script>
     <script src="charts.js"></script>
     <script src="skewt.js"></script>
     <script src="exporter.js"></script>
+    <script type="module" src="report.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

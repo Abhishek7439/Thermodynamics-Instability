@@ -2,29 +2,61 @@ let comparisonChartInstance = null;
 let timeSeriesChartInstance = null;
 
 function initCharts() {
-    // Populate select dropdowns
+    const ann = window['chartjs-plugin-annotation'];
+    if (typeof Chart !== 'undefined' && ann && !Chart.registry.plugins.get('annotation')) {
+        Chart.register(ann);
+    }
+
     const compareSelect = document.getElementById('compareIndexSelect');
     const tsSelect = document.getElementById('timeSeriesIndexSelect');
-    
-    INDICES_CONFIG.forEach(c => {
-        const opt1 = document.createElement('option');
-        opt1.value = c.key;
-        opt1.textContent = c.name;
-        compareSelect.appendChild(opt1);
+    if (!compareSelect || !tsSelect) return;
 
-        const opt2 = document.createElement('option');
-        opt2.value = c.key;
-        opt2.textContent = c.name;
-        tsSelect.appendChild(opt2);
+    INDICES_CONFIG.forEach(c => {
+        compareSelect.add(new Option(c.name, c.key));
+        tsSelect.add(new Option(c.name, c.key));
     });
 
-    // Event listeners to redraw when selection changes
-    compareSelect.addEventListener('change', () => updateComparisonChart(window.appData));
-    tsSelect.addEventListener('change', () => updateTimeSeriesChart(window.appData));
+    compareSelect.addEventListener('change', () => {
+        updateComparisonChart(window.appData);
+        assertDataConsistency(window.appData);
+    });
+    tsSelect.addEventListener('change', () => {
+        updateTimeSeriesChart(window.appData);
+        assertDataConsistency(window.appData);
+    });
+}
+
+function buildComparisonAnnotations(selectedIndex) {
+    const lines = getReferenceLinesForIndex(selectedIndex);
+    if (!lines.length || typeof Chart === 'undefined') return {};
+
+    const annotations = {};
+    lines.forEach((line, i) => {
+        annotations[`line${i}`] = {
+            type: 'line',
+            yMin: line.value,
+            yMax: line.value,
+            borderColor: getSeverityChartColor(line.tier === 'stable' ? 'stable' : line.tier === 'unstable' ? 'unstable' : 'moderate'),
+            borderWidth: 2,
+            borderDash: [6, 4],
+            label: {
+                display: true,
+                content: `${line.value}`,
+                position: 'start',
+                backgroundColor: 'rgba(15,23,42,0.8)',
+                color: '#cbd5e1',
+                font: { size: 10 }
+            }
+        };
+    });
+    return annotations;
 }
 
 function updateComparisonChart(appData) {
     if (!appData || appData.length === 0) return;
+
+    const canvas = document.getElementById('comparisonChart');
+    if (!canvas) return;
 
     const selectedIndex = document.getElementById('compareIndexSelect').value;
     const indexConfig = INDICES_CONFIG.find(c => c.key === selectedIndex);
@@ -34,30 +66,27 @@ function updateComparisonChart(appData) {
     const bgColors = [];
 
     appData.forEach(record => {
-        // Just take the first available data point per station for the comparison chart 
-        // to avoid crowding. Or if we want all, we can label them "Station (Date Time)"
-        const label = `${record.stationName} (${record.date} ${record.time})`;
-        const val = record.parsedData[selectedIndex];
-        
+        const label = getRecordLabel(record);
+        const val = getIndexValue(record, selectedIndex);
         labels.push(label);
-        const validVal = val !== null && val !== undefined && !isNaN(val) ? val : null;
-        values.push(validVal);
-
+        values.push(val);
         const severity = getSeverityClass(selectedIndex, val);
-        if (severity === 'stable') bgColors.push('#4ade80');
-        else if (severity === 'moderate') bgColors.push('#fbbf24');
-        else if (severity === 'unstable') bgColors.push('#f87171');
-        else bgColors.push('rgba(148, 163, 184, 0.5)'); // no data or uncolored
+        bgColors.push(getSeverityChartColor(severity || 'nodata'));
     });
 
-    const ctx = document.getElementById('comparisonChart').getContext('2d');
-    
+    const ctx = canvas.getContext('2d');
     if (comparisonChartInstance) comparisonChartInstance.destroy();
+
+    const plugins = {};
+    const annotations = buildComparisonAnnotations(selectedIndex);
+    if (Object.keys(annotations).length && typeof Chart !== 'undefined') {
+        plugins.annotation = { annotations };
+    }
 
     comparisonChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: labels,
+            labels,
             datasets: [{
                 label: indexConfig.name,
                 data: values,
@@ -70,11 +99,12 @@ function updateComparisonChart(appData) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false }
+                legend: { display: false },
+                ...plugins
             },
             scales: {
                 y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#cbd5e1' } },
-                x: { grid: { display: false }, ticks: { color: '#cbd5e1' } }
+                x: { grid: { display: false }, ticks: { color: '#cbd5e1', maxRotation: 45 } }
             }
         }
     });
@@ -83,67 +113,54 @@ function updateComparisonChart(appData) {
 function updateTimeSeriesChart(appData) {
     if (!appData || appData.length === 0) return;
 
-    const selectedIndex = document.getElementById('timeSeriesIndexSelect').value;
-    const indexConfig = INDICES_CONFIG.find(c => c.key === selectedIndex);
+    const canvas = document.getElementById('timeSeriesChart');
+    if (!canvas) return;
 
-    // Group data by station
+    const selectedIndex = document.getElementById('timeSeriesIndexSelect').value;
     const stationData = {};
     const datesSet = new Set();
 
     appData.forEach(r => {
-        if (!stationData[r.stationName]) {
-            stationData[r.stationName] = [];
-        }
+        if (!stationData[r.stationName]) stationData[r.stationName] = [];
         const timeLabel = `${r.date} ${r.time}`;
         datesSet.add(timeLabel);
         stationData[r.stationName].push({
-            timeLabel: timeLabel,
-            val: r.parsedData[selectedIndex]
+            timeLabel,
+            val: getIndexValue(r, selectedIndex)
         });
     });
 
     const sortedDates = Array.from(datesSet).sort();
-
     const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
     let cIdx = 0;
 
     const datasets = Object.keys(stationData).map(station => {
-        // Align values to sortedDates
         const dataMap = {};
         stationData[station].forEach(d => { dataMap[d.timeLabel] = d.val; });
-        const dataArr = sortedDates.map(date => {
-            const v = dataMap[date];
-            return v !== undefined && v !== null && !isNaN(v) ? v : null;
-        });
-
+        const dataArr = sortedDates.map(date => dataMap[date] ?? null);
         const ds = {
             label: station,
             data: dataArr,
             borderColor: colors[cIdx % colors.length],
             backgroundColor: colors[cIdx % colors.length],
             tension: 0.1,
-            fill: false
+            fill: false,
+            spanGaps: false
         };
         cIdx++;
         return ds;
     });
 
-    const ctx = document.getElementById('timeSeriesChart').getContext('2d');
-
+    const ctx = canvas.getContext('2d');
     if (timeSeriesChartInstance) timeSeriesChartInstance.destroy();
 
     timeSeriesChartInstance = new Chart(ctx, {
         type: 'line',
-        data: {
-            labels: sortedDates,
-            datasets: datasets
-        },
+        data: { labels: sortedDates, datasets },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: { labels: { color: '#cbd5e1' } }
-            },
+            plugins: { legend: { labels: { color: '#cbd5e1' } } },
             scales: {
                 y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#cbd5e1' } },
                 x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#cbd5e1' } }
@@ -151,3 +168,10 @@ function updateTimeSeriesChart(appData) {
         }
     });
 }
+
+Object.assign(window, {
+    initCharts,
+    updateComparisonChart,
+    updateTimeSeriesChart,
+    getChartInstances: () => ({ comparison: comparisonChartInstance, timeSeries: timeSeriesChartInstance })
+});

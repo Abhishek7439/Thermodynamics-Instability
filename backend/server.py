@@ -74,12 +74,12 @@ def fetch_sounding():
         resp = requests.get(wyoming_url, headers=headers, timeout=15)
         resp.raise_for_status()
         html_text = resp.text
-        
+
         if "Sorry, we are unable to process your request" in html_text or "No observations" in html_text or "Can't get" in html_text:
             return jsonify({'error': 'No data available', 'html': html_text}), 404
-            
+
         temps, dews, barbs = parse_profile(html_text)
-        
+
         b64_image = None
         if len(temps) > 0:
             fig = plt.figure(figsize=(8, 8))
@@ -88,17 +88,27 @@ def fetch_sounding():
             if len(barbs) > 0:
                 profile.barbs(barbs)
             ax.plot(dews, color='blue', label='Dewpoint')
-            
+
             buf = io.BytesIO()
             plt.savefig(buf, format='png', bbox_inches='tight')
             buf.seek(0)
             b64_image = base64.b64encode(buf.read()).decode('utf-8')
-            plt.close(fig) # free memory
-            
+            plt.close(fig)
+
         return jsonify({
             'html': html_text,
             'tephigram': b64_image
         })
+
+    except requests.exceptions.HTTPError as e:
+        status = e.response.status_code if e.response is not None else 502
+        msg = f"Wyoming server returned HTTP {status}"
+        if status == 403:
+            msg = "Wyoming server rate-limited request (HTTP 403) — wait a few seconds and retry"
+        return jsonify({'error': msg}), 502
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({'error': f"Network error reaching Wyoming: {e}"}), 502
 
     except Exception as e:
         import traceback
