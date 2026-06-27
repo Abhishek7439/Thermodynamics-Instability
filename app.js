@@ -1,6 +1,51 @@
 window.appData = [];
 
-const API_BASE = 'http://localhost:5000';
+// Dynamic API base: use Flask for local dev, same-origin for Vercel/production
+const API_BASE = (() => {
+    if (typeof window !== 'undefined' && window.__ELECTRON_API_BASE__) {
+        return window.__ELECTRON_API_BASE__;  // Electron desktop app
+    }
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+        // Check if running on a Vercel dev server (port 3000) or plain HTTP server
+        const port = window.location.port;
+        if (port === '3000') return '';  // Vercel dev
+        return 'http://localhost:5000';  // Flask dev
+    }
+    return '';  // Production: same-origin (Vercel)
+})();
+
+// ── Global Error Handling ──────────────────────────────────────────────────────
+window.addEventListener('error', (e) => {
+    console.error('[Global Error]', e.message, e.filename, e.lineno);
+});
+window.addEventListener('unhandledrejection', (e) => {
+    console.error('[Unhandled Promise Rejection]', e.reason);
+});
+
+// ── Network Status Indicator ───────────────────────────────────────────────────
+function updateOnlineStatus() {
+    const indicator = document.getElementById('networkStatus');
+    if (!indicator) return;
+    if (navigator.onLine) {
+        indicator.classList.remove('offline');
+        indicator.innerHTML = '<i class="fa-solid fa-wifi"></i> Online';
+    } else {
+        indicator.classList.add('offline');
+        indicator.innerHTML = '<i class="fa-solid fa-wifi-slash"></i> Offline';
+    }
+}
+
+// ── Service Worker Registration ────────────────────────────────────────────────
+function registerServiceWorker() {
+    if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
+        navigator.serviceWorker.register('/sw.js').then(reg => {
+            console.log('[SW] Registered:', reg.scope);
+        }).catch(err => {
+            console.warn('[SW] Registration failed:', err);
+        });
+    }
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     initControls();
@@ -11,19 +56,18 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('fetchBtn').addEventListener('click', () => startFetch(false));
     document.getElementById('exportBtn').addEventListener('click', handleExcelExport);
 
-    document.getElementById('reportWordBtn')?.addEventListener('click', () => runReport('word'));
-    document.getElementById('reportPdfBtn')?.addEventListener('click', () => runReport('pdf'));
     document.getElementById('clearCacheBtn')?.addEventListener('click', () => {
         clearAllCachedSoundings();
         alert('All cached sounding data cleared.');
     });
 
-    document.addEventListener('reportGeneratorReady', () => {
-        document.getElementById('reportWordBtn')?.removeAttribute('disabled');
-        document.getElementById('reportPdfBtn')?.removeAttribute('disabled');
-    });
+
 
     renderSeverityLegend();
+    registerServiceWorker();
+    updateOnlineStatus();
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
 });
 
 function initControls() {
@@ -54,8 +98,9 @@ function initControls() {
     if (regionSelect) regionSelect.value = 'seasia';
 
     const stationSelect = document.getElementById('stationInput');
-    if (typeof targetStations !== 'undefined') {
-        targetStations.forEach(s => {
+    const stationsList = window.targetStations || (typeof targetStations !== 'undefined' ? targetStations : null);
+    if (stationsList && Array.isArray(stationsList)) {
+        stationsList.forEach(s => {
             stationSelect.add(new Option(`${s.name} (${s.number})`, s.number));
         });
     }
@@ -246,8 +291,20 @@ async function fetchSingleSounding(opts) {
 
     const url = `${API_BASE}/api/sounding?region=${region}&YEAR=${year}&MONTH=${month}&FROM=${fromTime}&TO=${toTime}&STNM=${stNumber}`;
 
-    try {
-        const resp = await fetch(url);
+    // Retry with exponential backoff (max 2 retries)
+    const MAX_RETRIES = 2;
+    let lastError = null;
+
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        if (attempt > 0) {
+            const delay = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
+            card.querySelector('.status-text').textContent = `Retry ${attempt}/${MAX_RETRIES}…`;
+            await new Promise(r => setTimeout(r, delay));
+        }
+
+        try {
+            const resp = await fetch(url);
+
         let json = null;
         try { json = await resp.json(); } catch (_) {}
 
@@ -294,23 +351,36 @@ async function fetchSingleSounding(opts) {
 
         window.appData.push(record);
         updateStatusCard(card, record, null);
+        return;  // Success — exit retry loop
 
     } catch (e) {
-        const record = buildSoundingRecord({
-            stationName: stName,
-            stationNum: stNumber,
-            year, month, fromTime,
-            parsedData: {},
-            levelData: [],
-            rawHtml: '',
-            rawPreBlocks: [],
-            fetchError: e.message,
-            fetchedAt: new Date().toISOString()
-        });
-        window.appData.push(record);
-        updateStatusCard(card, record, e.message);
-        console.error('Fetch error:', e);
+        lastError = e;
+        // Non-retryable errors: 404, parse errors
+        const nonRetryable = e.message.includes('No data') ||
+                             e.message.includes('No sounding') ||
+                             e.message.includes('Parser could not') ||
+                             e.message.includes('no usable');
+        if (nonRetryable) break;
+        // Otherwise continue to next retry attempt
+        }
     }
+
+    // All retries exhausted or non-retryable error hit
+    const errorMsg = lastError?.message || 'Unknown fetch error';
+    const record = buildSoundingRecord({
+        stationName: stName,
+        stationNum: stNumber,
+        year, month, fromTime,
+        parsedData: {},
+        levelData: [],
+        rawHtml: '',
+        rawPreBlocks: [],
+        fetchError: errorMsg,
+        fetchedAt: new Date().toISOString()
+    });
+    window.appData.push(record);
+    updateStatusCard(card, record, errorMsg);
+    console.error('Fetch error (after retries):', lastError);
 }
 
 function createStatusCard(stName, fromTime) {

@@ -43,8 +43,8 @@ function buildComparisonAnnotations(selectedIndex) {
                 display: true,
                 content: `${line.value}`,
                 position: 'start',
-                backgroundColor: 'rgba(15,23,42,0.8)',
-                color: '#cbd5e1',
+                backgroundColor: 'rgba(255,255,255,0.9)',
+                color: '#475569',
                 font: { size: 10 }
             }
         };
@@ -92,7 +92,7 @@ function updateComparisonChart(appData) {
                 data: values,
                 backgroundColor: bgColors,
                 borderWidth: 1,
-                borderColor: 'rgba(255,255,255,0.1)'
+                borderColor: 'rgba(0,0,0,0.1)'
             }]
         },
         options: {
@@ -103,7 +103,7 @@ function updateComparisonChart(appData) {
                 ...plugins
             },
             scales: {
-                y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#cbd5e1' } },
+                y: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#cbd5e1' } },
                 x: { grid: { display: false }, ticks: { color: '#cbd5e1', maxRotation: 45 } }
             }
         }
@@ -131,23 +131,28 @@ function updateTimeSeriesChart(appData) {
     });
 
     const sortedDates = Array.from(datesSet).sort();
-    const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
-    let cIdx = 0;
+    const allStations = Array.from(new Set(window.appData.map(d => d.stationName))).sort();
 
     const datasets = Object.keys(stationData).map(station => {
         const dataMap = {};
         stationData[station].forEach(d => { dataMap[d.timeLabel] = d.val; });
         const dataArr = sortedDates.map(date => dataMap[date] ?? null);
+        
+        let colorHex = '#cbd5e1';
+        const sIdx = allStations.indexOf(station);
+        if (sIdx >= 0 && typeof STATION_COLORS !== 'undefined') {
+            colorHex = STATION_COLORS[sIdx % STATION_COLORS.length];
+        }
+
         const ds = {
             label: station,
             data: dataArr,
-            borderColor: colors[cIdx % colors.length],
-            backgroundColor: colors[cIdx % colors.length],
+            borderColor: colorHex,
+            backgroundColor: colorHex,
             tension: 0.1,
             fill: false,
             spanGaps: false
         };
-        cIdx++;
         return ds;
     });
 
@@ -162,8 +167,8 @@ function updateTimeSeriesChart(appData) {
             maintainAspectRatio: false,
             plugins: { legend: { labels: { color: '#cbd5e1' } } },
             scales: {
-                y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#cbd5e1' } },
-                x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#cbd5e1' } }
+                y: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#cbd5e1' } },
+                x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#cbd5e1' } }
             }
         }
     });

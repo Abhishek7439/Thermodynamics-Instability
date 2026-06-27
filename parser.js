@@ -50,7 +50,7 @@ function extractRawPreBlocks(htmlText) {
 function getIndicesPreText(htmlText) {
     const blocks = extractRawPreBlocks(htmlText);
     for (const block of blocks) {
-        if (block.includes('Station identifier')) return block;
+        if (block.includes('Station identifier') || block.includes('Station number')) return block;
     }
     return '';
 }
@@ -76,7 +76,7 @@ function parseIndices(htmlText) {
   };
 
   const data = {
-    station_id:     (indicesText.match(/Station identifier:\s*(\S+)/i) || [])[1] || 'N/A',
+    station_id:     (indicesText.match(/Station identifier:\s*(\S+)/i) || indicesText.match(/Station number:\s*(\S+)/i) || [])[1] || 'N/A',
     station_num:    get('Station number'),
     obs_time:       (indicesText.match(/Observation time:\s*([^\n]+)/i) || [])[1] || 'N/A',
     latitude:       get('Station latitude'),

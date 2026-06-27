@@ -1,0 +1,19 @@
+{
+  "name": "Thermodynamic Instability Dashboard",
+  "short_name": "ThermoDash",
+  "description": "Compare atmospheric instability indices across stations with interactive Skew-T diagrams, tephigrams, and severity-coded data tables.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b1120",
+  "theme_color": "#3b82f6",
+  "orientation": "any",
+  "categories": ["weather", "science", "utilities"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

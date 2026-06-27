@@ -1,0 +1,33 @@
+# Python
+backend/.venv/
+backend/__pycache__/
+__pycache__/
+*.pyc
+*.pyo
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Node
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Electron
+electron/dist/
+electron/node_modules/
+
+# Vercel
+.vercel/
+
+# Misc
+*.tmp

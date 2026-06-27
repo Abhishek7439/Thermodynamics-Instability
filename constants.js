@@ -45,6 +45,29 @@ const SEVERITY_PRESENTATION = {
     }
 };
 
+const SKEWT_COLORS = {
+    tempTrace: '#ef4444',
+    dewTrace: '#22c55e',
+    parcelPath: '#d946ef',
+    cape: 'rgba(245, 158, 11, 0.35)',
+    cin: 'rgba(59, 130, 246, 0.35)',
+    dryAdiabat: 'rgba(239, 68, 68, 0.12)',
+    moistAdiabat: 'rgba(34, 197, 94, 0.14)',
+    mixingRatio: 'rgba(139, 92, 246, 0.12)'
+};
+
+const WIND_BARB_BINS = [
+    { max: 20, color: '#4ade80' },
+    { max: 35, color: '#facc15' },
+    { max: 50, color: '#fb923c' },
+    { max: Infinity, color: '#f87171' }
+];
+
+const STATION_COLORS = [
+    '#3b82f6', '#ec4899', '#f59e0b', '#10b981', '#8b5cf6',
+    '#ef4444', '#14b8a6', '#f97316', '#6366f1', '#84cc16'
+];
+
 const DATA_SOURCE_LABEL = 'University of Wyoming Upper Air Soundings';
 
 function getSeverityPresentation(severity) {
@@ -72,6 +95,9 @@ function formatSeverityCell(severity) {
 Object.assign(window, {
     DATA_SOURCE_LABEL,
     SEVERITY_PRESENTATION,
+    SKEWT_COLORS,
+    WIND_BARB_BINS,
+    STATION_COLORS,
     getSeverityPresentation,
     getSeverityChartColor,
     getSeverityExcelColor,

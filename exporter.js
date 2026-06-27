@@ -44,6 +44,18 @@ function exportToExcel(appData, startDateStr, endDateStr) {
                 };
             }
         });
+
+        // Add Station Identity Color to the Station Name cell (column 0)
+        const allStations = Array.from(new Set(appData.map(d => d.stationName))).sort();
+        const sIdx = allStations.indexOf(row.stationName);
+        if (sIdx >= 0 && typeof STATION_COLORS !== 'undefined') {
+            const hex = STATION_COLORS[sIdx % STATION_COLORS.length].replace('#', '');
+            const cellAddress = XLSX.utils.encode_cell({ r: rIdx + 1, c: 0 });
+            if (summaryWs[cellAddress]) {
+                summaryWs[cellAddress].s = summaryWs[cellAddress].s || {};
+                summaryWs[cellAddress].s.fill = { fgColor: { rgb: hex } };
+            }
+        }
     });
 
     XLSX.utils.book_append_sheet(wb, summaryWs, "Summary");
