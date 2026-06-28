@@ -1,4 +1,10 @@
 # ⛈️ Upper Air Soundings
+<<<<<<< HEAD
+=======
+
+![Upper Air Soundings Banner](screenshots/banner.png)
+
+>>>>>>> 3cbf2ef (docs: add AI generated banner and update live url)
 <div align="center">
 
 ![Instability Dashboard Banner](https://img.shields.io/badge/Upper_Air-Soundings-blue?style=for-the-badge&logo=react)
@@ -9,7 +15,7 @@
 
 **A production-grade platform for fetching, parsing, and visualizing Upper Air Soundings. Features multi-station comparison, interactive Skew-T diagrams, and server-rendered tephigrams.**
 
-[🌐 Live Web Demo](https://your-app.vercel.app) · [💻 Download Desktop App](#-setup--deployment)
+[🌐 Live Web Demo](https://thermodynamics-instability.vercel.app/) · [💻 Download Desktop App](#-setup--deployment)
 
 </div>
 
@@ -60,6 +66,10 @@
 ---
 
 ## 🌟 Overview
+<<<<<<< HEAD
+=======
+
+>>>>>>> 3cbf2ef (docs: add AI generated banner and update live url)
 The Thermodynamic Instability Dashboard is an operational web and desktop application designed for meteorologists and weather enthusiasts. It processes raw atmospheric sounding data from the University of Wyoming's Upper Air archive and converts it into actionable, highly visual analytics.
 
 It supports:
