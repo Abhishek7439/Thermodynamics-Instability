@@ -1,10 +1,7 @@
 # ⛈️ Upper Air Soundings
-<<<<<<< HEAD
-=======
 
 ![Upper Air Soundings Banner](screenshots/banner.png)
 
->>>>>>> 3cbf2ef (docs: add AI generated banner and update live url)
 <div align="center">
 
 ![Instability Dashboard Banner](https://img.shields.io/badge/Upper_Air-Soundings-blue?style=for-the-badge&logo=react)
