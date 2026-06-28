@@ -10,7 +10,9 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-    
+    permissions:
+      contents: write
+      
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v3
@@ -19,9 +21,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
-
-      - name: Install root dependencies
-        run: npm install
         
       - name: Install Electron dependencies
         working-directory: electron
