@@ -21,26 +21,26 @@
 <table>
   <tr>
     <td align="center">
-      <img src="screenshots/dashboard.png" alt="Main Dashboard" width="100%"/>
-      <br/><b>🖥️ Main Dashboard</b>
+      <img src="screenshots/mockup_dashboard.png" alt="Main Dashboard" width="100%"/>
+      <br/><b>🖥️ AI Command Dashboard</b>
       <br/><sub>Multi-station control panel and severity-coded indices</sub>
     </td>
     <td align="center">
-      <img src="screenshots/skewt.png" alt="Skew-T Diagram" width="100%"/>
+      <img src="screenshots/mockup_skewt.png" alt="Skew-T Diagram" width="100%"/>
       <br/><b>🗺️ Interactive Skew-T/Log-P</b>
       <br/><sub>Dry/moist adiabats, parcel paths, and wind hodographs</sub>
     </td>
   </tr>
   <tr>
     <td align="center">
-      <img src="screenshots/charts.png" alt="Comparison Charts" width="100%"/>
-      <br/><b>📊 Visual Analytics</b>
+      <img src="screenshots/mockup_analytics.png" alt="Comparison Charts" width="100%"/>
+      <br/><b>📊 Visual Analytics Engine</b>
       <br/><sub>Bar chart comparisons and time-series trend analysis</sub>
     </td>
     <td align="center">
-      <img src="screenshots/tephigram.png" alt="Tephigram" width="100%"/>
-      <br/><b>🌡️ Server-Rendered Tephigrams</b>
-      <br/><sub>High-accuracy plotting via the Python Tephi library</sub>
+      <img src="screenshots/mockup_desktop.png" alt="Desktop App" width="100%"/>
+      <br/><b>🌡️ Desktop Dashboard PWA</b>
+      <br/><sub>High-accuracy plotting and offline resilience</sub>
     </td>
   </tr>
 </table>
