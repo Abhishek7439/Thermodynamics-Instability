@@ -7,13 +7,12 @@
   "license": "MIT",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win",
-    "build:portable": "electron-builder --win portable",
-    "build:all": "electron-builder --win --mac --linux"
+    "build": "node build.js"
   },
   "devDependencies": {
     "electron": "^33.0.0",
-    "electron-builder": "^25.0.0"
+    "electron-builder": "^25.0.0",
+    "electron-packager": "^17.1.2"
   },
   "build": {
     "appId": "com.rmc.thermodynamic-instability",
@@ -26,11 +25,15 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         },
         {
           "target": "portable",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "build/icon.ico"
@@ -43,12 +46,17 @@
       "installerHeaderIcon": "build/icon.ico"
     },
     "mac": {
-      "target": ["dmg"],
+      "target": [
+        "dmg"
+      ],
       "icon": "build/icon.icns",
       "category": "public.app-category.weather"
     },
     "linux": {
-      "target": ["AppImage", "deb"],
+      "target": [
+        "AppImage",
+        "deb"
+      ],
       "icon": "build/icon.png",
       "category": "Science"
     },
@@ -61,7 +69,12 @@
       {
         "from": "../backend",
         "to": "backend",
-        "filter": ["**/*", "!.venv/**", "!__pycache__/**", "!*.pyc"]
+        "filter": [
+          "**/*",
+          "!.venv/**",
+          "!__pycache__/**",
+          "!*.pyc"
+        ]
       }
     ]
   }

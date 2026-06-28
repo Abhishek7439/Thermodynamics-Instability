@@ -32,16 +32,20 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Zip the application
+        working-directory: electron/dist
+        run: Compress-Archive -Path "Thermodynamic Instability Dashboard-win32-x64" -DestinationPath "Thermodynamic-Instability-Windows-x64.zip"
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: windows-installer
-          path: electron/dist/*.exe
+          name: windows-app
+          path: electron/dist/Thermodynamic-Instability-Windows-x64.zip
 
       - name: Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: electron/dist/*.exe
+          files: electron/dist/Thermodynamic-Instability-Windows-x64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
