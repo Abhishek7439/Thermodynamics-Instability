@@ -1,6 +1,4 @@
 # ⛈️ Upper Air Soundings
-
-![Weather Analytics Banner](screenshots/banner.png)
 <div align="center">
 
 ![Instability Dashboard Banner](https://img.shields.io/badge/Upper_Air-Soundings-blue?style=for-the-badge&logo=react)
@@ -62,11 +60,6 @@
 ---
 
 ## 🌟 Overview
-
-<div align="center">
-  <img src="screenshots/saas_mockup.png" alt="SaaS Dashboard Mockup" width="80%" style="border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); margin-bottom: 20px;"/>
-</div>
-
 The Thermodynamic Instability Dashboard is an operational web and desktop application designed for meteorologists and weather enthusiasts. It processes raw atmospheric sounding data from the University of Wyoming's Upper Air archive and converts it into actionable, highly visual analytics.
 
 It supports:
