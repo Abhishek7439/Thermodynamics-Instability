@@ -1,7 +1,5 @@
 # ⛈️ Upper Air Soundings
 
-![Upper Air Soundings Banner](screenshots/banner.png)
-
 <div align="center">
 
 ![Instability Dashboard Banner](https://img.shields.io/badge/Upper_Air-Soundings-blue?style=for-the-badge&logo=react)
